@@ -26,7 +26,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def fit(self, prototype, center):
 		self.filteredProto = self.filter_suppress(prototype)
-		self.tuples = self.findTuples(prototype, center)
+		self.tuples = self.findTuples(self.filteredProto, center)
 		return self.tuples
 
 	def transform(self, prototype):
@@ -52,6 +52,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 								[i*m.pi/precision*2 for i in range(0,precision)]
 						 ]
 				vals = [image[coord] for coord in coords]
+				print(vals)
 
 				# Find peaks in circle
 				maxima = peakFunction.transform(vals)
