@@ -4,8 +4,8 @@ python:
   - "3.6"
 # command to install dependencies
 install:
-  - pip3 install -r requirements.txt
+  - pip3 install setuptools
   - python3 setup.py install
 # command to run tests
 script:
-  - ci_scripts/travis/test.sh # or py.test for Python versions 3.5 and below
+  - ci_scripts/test.sh # or py.test for Python versions 3.5 and below
