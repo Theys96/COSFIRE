@@ -8,7 +8,8 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 		self.strategy = strategy(*pargs, **kwargs)
 
 	def fit(self, prototype, *pargs, **kwargs):
-		return self.strategy.fit(prototype, *pargs, **kwargs)
+		self.strategy.fit(prototype, *pargs, **kwargs)
+		return self;
 
 	def transform(self, prototype, *pargs, **kwargs):
 		return self.strategy.transform(prototype, *pargs, **kwargs)
@@ -52,7 +53,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 								[i*m.pi/precision*2 for i in range(0,precision)]
 						 ]
 				vals = [image[coord] for coord in coords]
-				print(vals)
 
 				# Find peaks in circle
 				maxima = peakFunction.transform(vals)
