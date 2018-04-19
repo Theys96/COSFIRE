@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/Theys96/COSFIRE.svg?branch=master)](https://travis-ci.com/Theys96/COSFIRE)
+[![Build Status](https://travis-ci.org/Theys96/COSFIRE.svg?branch=master)](https://travis-ci.org/Theys96/COSFIRE)
+
 # COSFIRE Python Library for Scikit-Learn
 
 ## Installation and Usage
