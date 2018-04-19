@@ -31,7 +31,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		return self.tuples
 
 	def transform(self, prototype):
-		raise NotImplementedError("How does CircleStrategy transform a prototype?")
+		raise NotImplementedError("How does CircleStrategy transform an input?")
 
 	def filter_suppress(self, image):
 		return cosfire.SuppressFunction(self.T1).transform(
@@ -39,19 +39,22 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				)
 
 	def findTuples(self, image, center, precision=16):
+		# Init some variables
 		(cx, cy) = center
 		peakFunction = cosfire.CircularPeaksFunction()
 		tuples = []
+
+		# Go over every rho (radius of circles)
 		for rho in self.rhoList:
-			if rho == 0:
-				if image[cy,cx] > 0:
-					tuples.append((self.sigma, rho, 0))
+			if rho == 0 and image[cy,cx] > 0:   # Circle with no radius, so just the center point
+				tuples.append((self.sigma, rho, 0))
 			elif rho > 0:
 				# Compute points (amount=precision) on the circle of radius rho with center point (cx,cy)
 				coords = [ ( cy+int(round(rho*m.sin(phi))) , cx+int(round(rho*m.cos(phi))) )
 							for phi in
 								[i*m.pi/precision*2 for i in range(0,precision)]
 						 ]
+				# Retrieve values on the circle points in the given filtered prototype
 				vals = [image[coord] for coord in coords]
 
 				# Find peaks in circle
