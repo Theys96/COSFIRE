@@ -68,3 +68,4 @@ target/
 
 # Mac OS X
 .DS_Store
+examples/update
