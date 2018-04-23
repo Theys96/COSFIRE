@@ -19,11 +19,14 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, T1=0.2):
+	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, precision=16):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
 		self.rhoList = rhoList
+		self.sigma0 = sigma0
+		self.alpha
+		self.precision = precision
 
 	def fit(self, prototype, center):
 		self.protoStack = cosfire.ImageStack(prototype, self.filt, self.filterArgs, self.T1)
@@ -32,7 +35,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def transform(self, prototype):
 		raise NotImplementedError("How does CircleStrategy transform an input?")
 
-	def findTuples(self, image, center, precision=16):
+	def findTuples(self, image, center):
 		# Init some variables
 		(cx, cy) = center
 		peakFunction = cosfire.CircularPeaksFunction()
@@ -49,13 +52,13 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				# Compute points (amount=precision) on the circle of radius rho with center point (cx,cy)
 				coords = [ ( cx+int(round(rho*m.cos(phi))) , cy+int(round(rho*m.sin(phi))) )
 							for phi in
-								[i*m.pi/precision*2 for i in range(0,precision)]
+								[i*m.pi/self.precision*2 for i in range(0,self.precision)]
 						 ]
 				# Retrieve values on the circle points in the given filtered prototype
 				vals = [self.protoStack.valueAtPoint(*coord) for coord in coords]
 
 				# Find peaks in circle
 				maxima = peakFunction.transform([x[0] for x in vals])
-				tuples.extend([ (rho, i*m.pi/precision*2)+vals[i][1] for i in maxima])
+				tuples.extend([ (rho, i*m.pi/self.precision*2)+vals[i][1] for i in maxima])
 		return tuples
 
