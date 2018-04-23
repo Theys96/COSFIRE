@@ -36,8 +36,8 @@ def normalize(image):
     return image/image.max()
 
 def shiftImage(image, dx, dy):
-    shift = image[-dx:,:] if dx <= 0 else image[:-dx,:]
-    shift = shift[:,-dy:] if dy <= 0 else shift[:,:-dy]
+    shift = image[-dy:,:] if dy <= 0 else image[:-dy,:]
+    shift = shift[:,-dx:] if dx <= 0 else shift[:,:-dx]
     pad = np.zeros((np.absolute(dy), shift.shape[1]))
     shift = np.concatenate((shift, pad)) if dy <= 0 else np.concatenate((pad, shift))
     pad = np.zeros((shift.shape[0], np.absolute(dx)))
