@@ -25,7 +25,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.T1 = T1
 		self.rhoList = rhoList
 		self.sigma0 = sigma0
-		self.alpha
+		self.alpha = alpha
 		self.precision = precision
 
 	def fit(self, prototype, center):
@@ -38,7 +38,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def findTuples(self, image, center):
 		# Init some variables
 		(cx, cy) = center
-		peakFunction = cosfire.CircularPeaksFunction()
 		tuples = []
 
 		# Go over every rho (radius of circles)
@@ -58,7 +57,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				vals = [self.protoStack.valueAtPoint(*coord) for coord in coords]
 
 				# Find peaks in circle
-				maxima = peakFunction.transform([x[0] for x in vals])
+				maxima = cosfire.circularPeaks([x[0] for x in vals])
 				tuples.extend([ (rho, i*m.pi/self.precision*2)+vals[i][1] for i in maxima])
 		return tuples
 
