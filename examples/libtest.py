@@ -6,21 +6,22 @@ import matplotlib.pyplot as plt
 
 
 # Prototype image
-proto = np.asarray(Image.open('tomato.jpg').convert('L'), dtype=np.float64)
-(cx, cy) = (305,305)
+proto = np.asarray(Image.open('prototype1.png').convert('L'), dtype=np.float64)
+(cx, cy) = (50,50)
 
 # Create COSFIRE operator and fit it with the prototype
 cosf = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (2.6, 1), [x*5 for x in range(0,60)]
+		c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), [0,10,20,40]
 	   ).fit(proto, (cx, cy))
 
 # Draw filtered prototype
-tupleCoords = [( cx+int(round(rho*m.sin(phi))) , cy+int(round(rho*m.cos(phi))) ) for (sigma, rho, phi) in cosf.strategy.tuples]
-print(tupleCoords);
-plt.imshow(cosf.strategy.filteredProto, cmap='gray')
+tupleCoords = [( cx+int(round(rho*m.sin(phi))) , cy+int(round(rho*m.cos(phi))) ) for (rho, phi, *_) in cosf.strategy.tuples]
+print(cosf.strategy.tuples);
+plt.imshow(proto, cmap='gray')
 tupleCoords = np.asarray(tupleCoords)
 try:
 	plt.plot(tupleCoords[:,1], tupleCoords[:,0],"xr")
 except:
 	print("No tuples found")
 plt.show()
+
