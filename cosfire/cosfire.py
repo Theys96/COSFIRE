@@ -43,7 +43,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			dy = int(round(rho*np.sin(phi)))
 			if self.alpha != 0:
 				gaus = cosfire.GaussianFilter(self.sigma0 + rho*self.alpha)
-			images.append(cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), dx, dy).clip(min=0))
+			images.append(cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), -dx, -dy).clip(min=0))
 		result = np.ones(subject.shape)
 		for img in images:
 			result = np.multiply(result, img)

@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 
 # Prototype image
 proto = np.asarray(Image.open('prototype1.png').convert('L'), dtype=np.float64)
-subject = np.asarray(Image.open('prototype1.png').convert('L'), dtype=np.float64)
+subject = np.asarray(Image.open('prototype4.png').convert('L'), dtype=np.float64)
 (cx, cy) = (50,50)
 
 # Create COSFIRE operator and fit it with the prototype
 cosf = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), [0,10,20,40]
+		c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), [0,20,40]
 	   ).fit(proto, (cx, cy))
 result = cosf.transform(subject)
 
@@ -26,6 +26,7 @@ try:
 except:
 	print("No tuples found")
 plt.show()
+
 
 plt.imshow(result, cmap='gray')
 plt.show()

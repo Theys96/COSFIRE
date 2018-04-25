@@ -36,7 +36,6 @@ def normalize(image):
     return image/image.max()
 
 def shiftImage(image, dx, dy):
-    '''
     shift = image[-dy:,:] if dy <= 0 else image[:-dy,:]
     shift = shift[:,-dx:] if dx <= 0 else shift[:,:-dx]
     pad = np.zeros((np.absolute(dy), shift.shape[1]))
@@ -46,4 +45,5 @@ def shiftImage(image, dx, dy):
     '''
     shift = np.roll(image, dx, axis=1)
     shift = np.roll(shift, dy, axis=0)
+    '''
     return shift
