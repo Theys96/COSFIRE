@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 
 
 # Prototype image
-proto = np.asarray(Image.open('prototype1.png').convert('L'), dtype=np.float64)
+proto = np.asarray(Image.open('edge.png').convert('L'), dtype=np.float64)
 subject = np.asarray(Image.open('rhino.png').convert('L'), dtype=np.float64)
 (cx, cy) = (50,50)
 
 # Create COSFIRE operator and fit it with the prototype
 cosf = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), [0,20,40]
+		c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), [0,5,10,15,20]
 	   ).fit(proto, (cx, cy))
 '''
 cosf = c.COSFIRE(
@@ -21,6 +21,7 @@ cosf = c.COSFIRE(
 '''
 result = cosf.transform(subject)
 
+'''
 # Draw filtered prototype
 tupleCoords = [( cx+int(round(rho*m.sin(phi))) , cy+int(round(rho*m.cos(phi))) ) for (rho, phi, *_) in cosf.strategy.tuples]
 print(cosf.strategy.tuples);
@@ -32,6 +33,7 @@ try:
 except:
 	print("No tuples found")
 plt.show()
+'''
 
 plt.imshow(result, cmap='gray')
 plt.show()

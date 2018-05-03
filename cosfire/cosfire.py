@@ -34,9 +34,18 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# self.rotateTuples()
 
 	def transform(self, subject):
+		result = self.applyCOSFIRE(subject, self.tuples)
+		for i in range(self.precision):
+			self.rotateTuples()
+			for factor in [0.2, 0.5, 0.8, 1, 1.5, 2, 3]:
+				tuples = [(rho*factor, phi, *params) for (rho, phi, *params) in self.tuples]
+				result = np.maximum(result, self.applyCOSFIRE(subject, tuples))
+		return result
+
+	def applyCOSFIRE(self, subject, tuples):
 		gaus = cosfire.GaussianFilter(self.sigma0)
 		images = []
-		for tupl in self.tuples:
+		for tupl in tuples:
 			rho = tupl[0]
 			phi = tupl[1]
 			args = tupl[2:]
@@ -46,7 +55,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				gaus = cosfire.GaussianFilter(self.sigma0 + rho*self.alpha)
 			images.append((cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), -dx, -dy).clip(min=0), rho))
 
-		maxWeight = 2*(np.amax([tupl[0] for tupl in self.tuples])/3)**2
+		maxWeight = 2*(np.amax([tupl[0] for tupl in tuples])/3)**2
 		totalWeight = 0
 		result = np.ones(subject.shape)
 		for img in images:
@@ -83,7 +92,4 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		return tuples
 
 	def rotateTuples(self):
-		tuples = []
-		for i in range(1,self.precision):
-			tuples.extend([(rho, phi+(2*np.pi*i/self.precision), *params) for (rho, phi, *params) in self.tuples])
-		self.tuples.extend(tuples)
+		self.tuples = [(rho, phi+(2*np.pi/self.precision), *params) for (rho, phi, *params) in self.tuples]
