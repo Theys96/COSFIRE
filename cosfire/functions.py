@@ -11,11 +11,11 @@ def circularPeaks(array):
         #i = i[0]
         added = False
         if i == n-1:
-            if up and array[0] < val:
+            if up and array[0] <= val:
                 maxima.append(i)
                 added = True
         else:
-            if up and (array[i+1] < val):
+            if up and (array[i+1] <= val):
                 maxima.append(i)
                 added = True
                 up = not up

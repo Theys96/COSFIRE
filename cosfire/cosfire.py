@@ -31,6 +31,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def fit(self, prototype, center):
 		self.protoStack = cosfire.ImageStack(prototype, self.filt, self.filterArgs, self.T1)
 		self.tuples = self.findTuples(self.protoStack, center)
+		# self.rotateTuples()
 
 	def transform(self, subject):
 		gaus = cosfire.GaussianFilter(self.sigma0)
@@ -43,10 +44,16 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			dy = int(round(rho*np.sin(phi)))
 			if self.alpha != 0:
 				gaus = cosfire.GaussianFilter(self.sigma0 + rho*self.alpha)
-			images.append(cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), -dx, -dy).clip(min=0))
+			images.append((cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), -dx, -dy).clip(min=0), rho))
+
+		maxWeight = 2*(np.amax([tupl[0] for tupl in self.tuples])/3)**2
+		totalWeight = 0
 		result = np.ones(subject.shape)
 		for img in images:
-			result = np.multiply(result, img)
+			weight = np.exp(-(img[1]**2)/maxWeight)
+			totalWeight += weight
+			result = np.multiply(result, img[0]**weight)
+		result = result**(1/totalWeight)
 		return result
 
 	def findTuples(self, image, center):
@@ -65,7 +72,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				# Compute points (amount=precision) on the circle of radius rho with center point (cx,cy)
 				coords = [ ( cx+int(round(rho*np.cos(phi))) , cy+int(round(rho*np.sin(phi))) )
 							for phi in
-								[i*np.pi/self.precision*2 for i in range(0,self.precision)]
+								[i*np.pi/self.precision*2 for i in range(self.precision)]
 						 ]
 				# Retrieve values on the circle points in the given filtered prototype
 				vals = [self.protoStack.valueAtPoint(*coord) for coord in coords]
@@ -74,3 +81,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				maxima = cosfire.circularPeaks([x[0] for x in vals])
 				tuples.extend([ (rho, i*np.pi/self.precision*2)+vals[i][1] for i in maxima])
 		return tuples
+
+	def rotateTuples(self):
+		tuples = []
+		for i in range(1,self.precision):
+			tuples.extend([(rho, phi+(2*np.pi*i/self.precision), *params) for (rho, phi, *params) in self.tuples])
+		self.tuples.extend(tuples)
