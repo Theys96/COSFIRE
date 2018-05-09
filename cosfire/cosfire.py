@@ -29,6 +29,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.precision = precision
 
 	def fit(self, prototype, center):
+		self.prototype = prototype;
 		self.protoStack = cosfire.ImageStack(prototype, self.filt, self.filterArgs, self.T1)
 		self.tuples = self.findTuples(self.protoStack, center)
 		# self.rotateTuples()
@@ -44,7 +45,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def applyCOSFIRE(self, subject, tuples):
 		gaus = cosfire.GaussianFilter(self.sigma0)
-		images = []
+		self.responses = []
 		for tupl in tuples:
 			rho = tupl[0]
 			phi = tupl[1]
@@ -53,12 +54,12 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			dy = int(round(rho*np.sin(phi)))
 			if self.alpha != 0:
 				gaus = cosfire.GaussianFilter(self.sigma0 + rho*self.alpha)
-			images.append((cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), -dx, -dy).clip(min=0), rho))
+			self.responses.append((cosfire.shiftImage(self.filt(*args).transform(gaus.transform(subject)), -dx, -dy).clip(min=0), rho))
 
 		maxWeight = 2*(np.amax([tupl[0] for tupl in tuples])/3)**2
 		totalWeight = 0
 		result = np.ones(subject.shape)
-		for img in images:
+		for img in self.responses:
 			weight = np.exp(-(img[1]**2)/maxWeight)
 			totalWeight += weight
 			result = np.multiply(result, img[0]**weight)
