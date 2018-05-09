@@ -29,18 +29,21 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.precision = precision
 
 	def fit(self, prototype, center):
-		self.prototype = prototype;
-		self.protoStack = cosfire.ImageStack(prototype, self.filt, self.filterArgs, self.T1)
-		self.tuples = self.findTuples(self.protoStack, center)
-		# self.rotateTuples()
+		self.prototype = prototype
+		self.center = center
+		self.protoStack = cosfire.ImageStack2().push(prototype).applyFilter(self.filt, self.filterArgs)
+		self.protoStack.T1 = self.T1
+		self.tuples = self.findTuples()
 
 	def transform(self, subject):
 		result = self.applyCOSFIRE(subject, self.tuples)
+		'''
 		for i in range(self.precision):
 			self.rotateTuples()
 			for factor in [0.2, 0.5, 0.8, 1, 1.5, 2, 3]:
 				tuples = [(rho*factor, phi, *params) for (rho, phi, *params) in self.tuples]
 				result = np.maximum(result, self.applyCOSFIRE(subject, tuples))
+		'''
 		return result
 
 	def applyCOSFIRE(self, subject, tuples):
@@ -66,9 +69,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		result = result**(1/totalWeight)
 		return result
 
-	def findTuples(self, image, center):
+	def findTuples(self):
 		# Init some variables
-		(cx, cy) = center
+		(cx, cy) = self.center
 		tuples = []
 
 		# Go over every rho (radius of circles)

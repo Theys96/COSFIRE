@@ -23,7 +23,7 @@ cosf = c.COSFIRE(
 for tupl in cosf.strategy.tuples:
 	print(tupl)
 
-plt.imshow(cosf.strategy.protoStack.stack[0][1], cmap='gray')
+plt.imshow(cosf.strategy.protoStack.stack[0].image, cmap='gray')
 tupleCoords = [( cy+int(round(rho*m.sin(phi))) , cx+int(round(rho*m.cos(phi))) ) for (rho, phi, *_) in cosf.strategy.tuples]
 tupleCoords = np.asarray(tupleCoords)
 try:
