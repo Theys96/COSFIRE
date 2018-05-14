@@ -1,5 +1,7 @@
 from .base import (FunctionFilter)
 from .filters import (GaussianFilter, DoGFilter, GaborFilter)
-from .functions import (NormalizeFunction, CircularPeaksFunction)
+from .functions import (circularPeaks, suppress, normalize, shiftImage)
+from .cosfire import (COSFIRE, CircleStrategy)
+from .utilities import (ImageStack, ImageStack, ImageObject)
 
-__all__ = ['FunctionFilter', 'GaussianFilter', 'DoGFilter', 'GaborFilter', 'NormalizeFunction', 'CircularPeaksFunction']
+__all__ = ['FunctionFilter', 'GaussianFilter', 'DoGFilter', 'GaborFilter', 'normalize', 'suppress', 'shiftImage', 'shiftImage', 'ImageStack']
