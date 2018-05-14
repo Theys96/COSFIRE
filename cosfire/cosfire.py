@@ -31,7 +31,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def fit(self, prototype, center):
 		self.prototype = prototype
 		self.center = center
-		self.protoStack = cosfire.ImageStack2().push(prototype).applyFilter(self.filt, self.filterArgs)
+		self.protoStack = cosfire.ImageStack().push(prototype).applyFilter(self.filt, self.filterArgs)
 		self.protoStack.T1 = self.T1
 		self.tuples = self.findTuples()
 

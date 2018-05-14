@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 
 # Prototype image
-proto = np.asarray(Image.open('edge.png').convert('L'), dtype=np.float64)
-subject = np.asarray(Image.open('rino.pgm').convert('L'), dtype=np.float64)
+proto = np.asarray(Image.open('prototype1.png').convert('L'), dtype=np.float64)
+subject = np.asarray(Image.open('01_test_inv.tif').convert('L'), dtype=np.float64)
 (cx, cy) = (50,50)
 
 # Create COSFIRE operator and fit it with the prototype
