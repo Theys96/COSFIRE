@@ -64,7 +64,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					phi = tupl[1]
 					args = tupl[2:]
 					sigma = self.sigma0 + rho*self.alpha
-					#print(tupl, (sigma,)+args in responses)
 					dx = int(round(rho*np.cos(phi)))
 					dy = int(round(rho*np.sin(phi)))
 					# Maybe check here if the required response really is there?
