@@ -37,13 +37,11 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def transform(self, subject):
 		result = self.applyCOSFIRE(subject, self.tuples)
-		'''
 		for i in range(self.precision):
 			self.rotateTuples()
 			for factor in [0.2, 0.5, 0.8, 1, 1.5, 2, 3]:
 				tuples = [(rho*factor, phi, *params) for (rho, phi, *params) in self.tuples]
 				result = np.maximum(result, self.applyCOSFIRE(subject, tuples))
-		'''
 		return result
 
 	def applyCOSFIRE(self, subject, tuples):
