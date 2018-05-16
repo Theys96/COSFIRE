@@ -4,4 +4,4 @@ from .functions import (circularPeaks, suppress, normalize, shiftImage)
 from .cosfire import (COSFIRE, CircleStrategy)
 from .utilities import (ImageStack, ImageStack, ImageObject)
 
-__all__ = ['FunctionFilter', 'GaussianFilter', 'DoGFilter', 'GaborFilter', 'normalize', 'suppress', 'shiftImage', 'shiftImage', 'ImageStack']
+__all__ = ['FunctionFilter', 'GaussianFilter', 'DoGFilter', 'GaborFilter', 'circularPeaks', 'normalize', 'suppress', 'shiftImage', 'shiftImage', 'ImageStack']
