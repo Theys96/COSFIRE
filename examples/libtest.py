@@ -25,6 +25,7 @@ cosf = c.COSFIRE(
 result1 = cosf = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, ([2,3], 1), [0,10,20], 0.2, 2, 0.
 	   ).fit(proto1, (cx, cy)).transform(subject)
+
 result1 = np.clip(result1, 0, 0.2*result1.max())
 
 result2 = cosf = c.COSFIRE(

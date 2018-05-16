@@ -36,6 +36,52 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.tuples = self.findTuples()
 
 	def transform(self, subject):
+		deltaRhoList = [0.2, 0.5, 0.8, 1, 1.5, 2, 3]
+
+		responses = {}
+		# Finding all responses
+		for tupl in self.tuples:
+			rho = tupl[0]
+			args = tupl[2:]
+			filteredResponse = self.filt(*args).transform(subject)
+			if self.alpha != 0:
+				for sigma in [self.sigma0 + rho*self.alpha for rho in [rho*deltaRho for rho in self.rhoList for deltaRho in deltaRhoList]]:
+					if ( not((sigma,)+args in responses) ):
+						responses[(sigma, )+args] = cosfire.GaussianFilter(sigma).transform(filteredResponse)
+			else:
+				sigma = self.sigma0 + rho*self.alpha
+				if ( not((sigma,)+args in responses) ):
+					responses[(sigma, )+args] = cosfire.GaussianFilter(sigma).transform(filteredResponse)
+
+		# Shifting and putting them together
+		result = np.zeros(subject.shape)
+		for deltaPhi in range(self.precision):
+			for deltaRho in deltaRhoList:
+				curTuples = [(rho*deltaRho, phi*deltaPhi*2*np.pi/self.precision, *params) for (rho, phi, *params) in self.tuples]
+				curResponses = []
+				for tupl in curTuples:
+					rho = tupl[0]
+					phi = tupl[1]
+					args = tupl[2:]
+					sigma = self.sigma0 + rho*self.alpha
+					#print(tupl, (sigma,)+args in responses)
+					dx = int(round(rho*np.cos(phi)))
+					dy = int(round(rho*np.sin(phi)))
+					# Maybe check here if the required response really is there?
+					curResponses.append( (cosfire.shiftImage(responses[(sigma,)+args], -dx, -dy).clip(min=0), rho) )
+				maxWeight = 2*(np.amax([tupl[0] for tupl in curTuples])/3)**2
+				totalWeight = 0
+				curResult = np.ones(subject.shape)
+				for img in curResponses:
+					weight = np.exp(-(img[1]**2)/maxWeight)
+					totalWeight += weight
+					curResult = np.multiply(curResult, img[0]**weight)
+				curResult = curResult**(1/totalWeight)
+				result = np.maximum(result, curResult)
+
+		return result
+
+		'''
 		result = self.applyCOSFIRE(subject, self.tuples)
 		for i in range(self.precision):
 			self.rotateTuples()
@@ -43,6 +89,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				tuples = [(rho*factor, phi, *params) for (rho, phi, *params) in self.tuples]
 				result = np.maximum(result, self.applyCOSFIRE(subject, tuples))
 		return result
+		'''
 
 	def applyCOSFIRE(self, subject, tuples):
 		gaus = cosfire.GaussianFilter(self.sigma0)
