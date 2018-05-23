@@ -32,8 +32,15 @@ def suppress(image, factor):
     return supImage
 
 def normalize(image):
-    image -= image.min()
-    return image/image.max()
+    mn = image.min()
+    mx = image.max()
+    image -= mn
+    return image/(mx-mn)
+
+def rescaleImage(image, mn, mx):
+    image = normalize(image)*(mx-mn)
+    image += mn
+    return image
 
 def shiftImage(image, dx, dy):
     shift = image[-dy:,:] if dy <= 0 else image[:-dy,:]
