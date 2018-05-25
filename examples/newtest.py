@@ -10,7 +10,7 @@ subject = np.asarray(Image.open('01_test_inv.tif').convert('L'), dtype=np.float6
 
 # Create COSFIRE operator and fit it with the prototype
 result = cosf = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (1.8, 1), range(0,22,2), 0.2, 2/6, 0.1/6, precision=24
+		c.CircleStrategy, c.DoGFilter, (1.8, 1), range(0,20,4), 0.2, 2/6, 0.1/6, precision=60
 	   ).fit(proto, (cx, cy)).transform(subject)
 '''
 result = c.COSFIRE(

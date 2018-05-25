@@ -2,6 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import cosfire as c
 import math as m
 import numpy as np
+import scipy.stats.mstats as mstats
 import time
 
 class COSFIRE(BaseEstimator, TransformerMixin):
@@ -20,7 +21,7 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, precision=16):
+	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, precision=24):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
@@ -28,7 +29,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.sigma0 = sigma0
 		self.alpha = alpha
 		self.precision = precision
-		self.deltaRhoList = [0.2, 0.5, 0.8, 1, 1.5, 2, 3]
+		self.deltaRhoList = [0.3, 0.5, 0.8, 1, 1.5]
 
 	def fit(self, prototype, center):
 		self.prototype = prototype
@@ -59,21 +60,25 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				# Collect shifted filter responses
 				curResponses = []
 				for tupl in curTuples:
-					curResponses.append( (responses[approxTupl(tupl)], tupl[0]) )
-				responseCollect = time.time()
+					#curResponses.append((responses[approxTupl(tupl)], tupl[0]))
+					curResponses.append(responses[approxTupl(tupl)])
+				#responseCollect = time.time()
 
 				# Combine shifted filter responses
-				curResult = self.weightedGeometricMean(curResponses)
+				#curResult = self.weightedGeometricMean(curResponses)
+				curResult = mstats.gmean(curResponses)
 				#calcMean = time.time()
 
 				# Include it in the final result
 				result = np.maximum(result, curResult)
 				#calcMax = time.time()
-				#print("done:")
-				#print("\tTime to collect filter responses: ", round((responseCollect - start)*1000,3), "ms")
-				#print("\tTime to compute the weighted geometric mean: ", round((calcMean - responseCollect)*1000,3), "ms")
-				#print("\tTime to add the result to the main result: ", round((calcMax - calcMean)*1000,3), "ms")
-				#print("\t\tTotal time for this step: ", round((calcMax - start)*1000,3), "ms")
+				'''
+				print("done:")
+				print("\tTime to collect filter responses: ", round((responseCollect - start)*1000,3), "ms")
+				print("\tTime to compute the weighted geometric mean: ", round((calcMean - responseCollect)*1000,3), "ms")
+				print("\tTime to add the result to the main result: ", round((calcMax - calcMean)*1000,3), "ms")
+				print("\t\tTotal time for this step: ", round((calcMax - start)*1000,3), "ms")
+				'''
 
 		return result
 
