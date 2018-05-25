@@ -37,6 +37,9 @@ def normalize(image):
     image -= mn
     return image/(mx-mn)
 
+def approx(float):
+    return round(float, 5)
+
 def rescaleImage(image, mn, mx):
     image = normalize(image)*(mx-mn)
     image += mn

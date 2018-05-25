@@ -2,8 +2,6 @@ import cosfire as c
 import numpy as np
 import math as m
 from PIL import Image
-import matplotlib.pyplot as plt
-
 
 # Prototype image
 proto = np.asarray(Image.open('prototype1.png').convert('L'), dtype=np.float64)
@@ -22,8 +20,5 @@ result = c.COSFIRE(
 
 result *= 0.5
 result = c.rescaleImage(result, 0, 255)
-plt.imshow(result ,cmap='gray')
-plt.show()
-result = np.where(result > 37, 1, 0)
-plt.imshow(result ,cmap='gray')
-plt.show()
+img = Image.fromarray(result.astype(np.uint8))
+img.save('output.tif')

@@ -1,7 +1,8 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-import cosfire
+import cosfire as c
 import math as m
 import numpy as np
+import time
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -32,50 +33,49 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def fit(self, prototype, center):
 		self.prototype = prototype
 		self.center = center
-		self.protoStack = cosfire.ImageStack().push(prototype).applyFilter(self.filt, self.filterArgs)
+		self.protoStack = c.ImageStack().push(prototype).applyFilter(self.filt, self.filterArgs)
 		self.protoStack.T1 = self.T1
 		self.tuples = self.findTuples()
 
 	def transform(self, subject):
 
 		# Precompute all blurred filter responses
+		print("Pre-computing responses")
 		responses = self.computeResponses(subject)
+		print("Responses pre-computed")
 
 		# Shifting and putting them together
+		def approxTupl(tupl):
+			return (tupl[0],c.approx(tupl[1]))+tupl[2:]
+
 		result = np.zeros(subject.shape)
 		for deltaPhi in range(self.precision):   # rotation invariance
 			for deltaRho in self.deltaRhoList:   # scale invariance
+				print("Doing Δphi=", deltaPhi, " Δrho=", deltaRho)
 				# Adjust base tuples
 				curTuples = self.computeTuples(deltaPhi, deltaRho)
 
-				# Compute shifted filter responses
+				#start = time.time()
+				# Collect shifted filter responses
 				curResponses = []
 				for tupl in curTuples:
-					rho = tupl[0]
-					phi = tupl[1]
-					args = tupl[2:]
-					sigma = self.sigma0 + rho*self.alpha
-					dx = int(round(rho*np.cos(phi)))
-					dy = int(round(rho*np.sin(phi)))
-					curResponses.append( (cosfire.shiftImage(responses[(sigma,)+tupl[2:]], -dx, -dy).clip(min=0), rho) )
+					curResponses.append( (responses[approxTupl(tupl)], tupl[0]) )
+				responseCollect = time.time()
 
 				# Combine shifted filter responses
 				curResult = self.weightedGeometricMean(curResponses)
+				#calcMean = time.time()
 
 				# Include it in the final result
 				result = np.maximum(result, curResult)
+				#calcMax = time.time()
+				#print("done:")
+				#print("\tTime to collect filter responses: ", round((responseCollect - start)*1000,3), "ms")
+				#print("\tTime to compute the weighted geometric mean: ", round((calcMean - responseCollect)*1000,3), "ms")
+				#print("\tTime to add the result to the main result: ", round((calcMax - calcMean)*1000,3), "ms")
+				#print("\t\tTotal time for this step: ", round((calcMax - start)*1000,3), "ms")
 
 		return result
-
-		'''
-		result = self.applyCOSFIRE(subject, self.tuples)
-		for i in range(self.precision):
-			self.rotateTuples()
-			for factor in [0.2, 0.5, 0.8, 1, 1.5, 2, 3]:
-				tuples = [(rho*factor, phi, *params) for (rho, phi, *params) in self.tuples]
-				result = np.maximum(result, self.applyCOSFIRE(subject, tuples))
-		return result
-		'''
 
 	def findTuples(self):
 		# Init some variables
@@ -99,12 +99,21 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				vals = [self.protoStack.valueAtPoint(*coord) for coord in coords]
 
 				# Find peaks in circle
-				maxima = cosfire.circularPeaks([x[0] for x in vals])
+				maxima = c.circularPeaks([x[0] for x in vals])
 				tuples.extend([ (rho, i*np.pi/self.precision*2)+vals[i][1] for i in maxima])
 		return tuples
 
 	def computeResponses(self, subject):
-		responses = {}
+		# We require a response for:
+		#  - every possible rho (rho*deltaRho)
+		#  - every possible phi (all precision angles)
+
+		# Response steps (all but shifting is interchangable in sequence):
+		#  - apply the filter
+		#  - apply blurring
+		#  - shift the response
+
+		rhoResponses = {}
 		for tupl in self.tuples:
 			rho = tupl[0]
 			args = tupl[2:]
@@ -112,19 +121,33 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			# First apply the chosen filter
 			filteredResponse = self.filt(*args).transform(subject)
 
-			# Find required values of sigma
-			sigmas = [self.sigma0 + rho*self.alpha]
 			if self.alpha != 0:
-				sigmas = [self.sigma0 + rho*self.alpha for rho in [rho*deltaRho for rho in self.rhoList for deltaRho in self.deltaRhoList]]
+				for deltaRho in self.deltaRhoList:
+					localRho = rho * deltaRho
+					blurredResponse = c.GaussianFilter(self.sigma0 + localRho*self.alpha).transform(filteredResponse)
+					rhoResponses[(localRho,)+args] = blurredResponse
+			else:
+				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponse)
+				for deltaRho in self.deltaRhoList:
+					localRho = rho * deltaRho
+					rhoResponses[(localRho,)+args] = blurredResponse
 
-			# Apply all blurs
-			for sigma in sigmas:
-				if ( not((sigma,)+args in responses) ):
-					responses[(sigma, )+args] = cosfire.GaussianFilter(sigma).transform(filteredResponse)
+		responses = {}
+		for tupl in rhoResponses:
+			rho = tupl[0]
+			args = tupl[1:]
+			step = 2*np.pi/self.precision
+			for phi in range(self.precision+1):
+				phi = c.approx(step*phi)
+				dx = int(round(rho*np.cos(phi)))
+				dy = int(round(rho*np.sin(phi)))
+				responses[(rho,phi)+args] = c.shiftImage(rhoResponses[tupl], -dx, -dy).clip(min=0)
+
+
 		return responses
 
 	def computeTuples(self, deltaPhi, deltaRho):
-		return [(rho*deltaRho, phi+(deltaPhi*2*np.pi/self.precision), *params) for (rho, phi, *params) in self.tuples]
+		return [(rho*deltaRho, (phi+(deltaPhi*2*np.pi/self.precision))%(2*np.pi), *params) for (rho, phi, *params) in self.tuples]
 
 	# Function to compute the weighted geometric mean
 	# of a list of responses
