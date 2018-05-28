@@ -53,10 +53,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				# Adjust base tuples
 				curTuples = self.computeTuples(deltaPhi, deltaRho)
 
-				print("")
-				for tupl in curTuples:
-					print(tupl)
-
 				# Collect shifted filter responses
 				curResponses = []
 				for tupl in curTuples:

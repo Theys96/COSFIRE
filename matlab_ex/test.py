@@ -2,6 +2,7 @@ import cosfire as c
 import numpy as np
 import math as m
 from PIL import Image
+#import matplotlib.pyplot as plt
 
 # Prototype image
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
@@ -42,6 +43,7 @@ result_asymm = c.rescaleImage(result_asymm, 0, 255)
 result = c.rescaleImage(result, 0, 255)
 binaryResult = np.where(result > 9, 255, 0)
 
+# Saving
 img_symm = Image.fromarray(result_symm.astype(np.uint8))
 img_symm.save('output_symm.tif')
 img_asymm = Image.fromarray(result_asymm.astype(np.uint8))
