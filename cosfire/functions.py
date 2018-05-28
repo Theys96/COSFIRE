@@ -5,24 +5,25 @@ import numpy as np
 # Returns: array of indices
 def circularPeaks(array):
     n = len(array)
-    up = array[0] > array[n-1]
+    d = 0.00005    # Small error correction
     maxima = []
-    #print(array)
     for i, val in enumerate(array):
-        #i = i[0]
-        added = False
-        if i == n-1:
-            if up and array[0]+0.00005 < val: # +0.00005 Required for precision errors
+        if (array[(i-1)%n]+d < val and array[(i+1)%n]+d < val):
+            maxima.append(i)
+        elif (abs(array[(i-1)%n] - val) < d and abs(array[(i+1)%n] - val) < d):
+            l = r = 0
+            k = 1
+            while (abs(array[(i-k)%n] - val) < d):
+                l += 1; k += 1
+            if (array[(i-k)%n] > val+d):
+                l = 0
+            k = 1
+            while (abs(array[(i+k)%n] - val) < d):
+                r += 1; k += 1
+            if (array[(i+k)%n] > val+d):
+                r = 0
+            if (l > 0 and r > 0 and (l == r or l + 1 == r)):
                 maxima.append(i)
-                added = True
-        else:
-            if up and (array[i+1]+0.00005 <= val): # +0.00005 Required for precision errors
-                maxima.append(i)
-                added = True
-                up = not up
-            elif not up and (array[i+1] > val+0.00005):
-                up = not up
-    #print(maxima)
     return maxima
 
 # Set all values < factor*max to 0
@@ -40,7 +41,7 @@ def normalize(image):
     return image/(mx-mn)
 
 def approx(float):
-    return round(float, 5)
+    return round(float, 3)
 
 def rescaleImage(image, mn, mx):
     image = normalize(image)*(mx-mn)
