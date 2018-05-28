@@ -53,6 +53,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				# Adjust base tuples
 				curTuples = self.computeTuples(deltaPhi, deltaRho)
 
+				print("")
+				for tupl in curTuples:
+					print(tupl)
+
 				# Collect shifted filter responses
 				curResponses = []
 				for tupl in curTuples:
@@ -139,7 +143,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		return responses
 
 	def computeTuples(self, deltaPhi, deltaRho):
-		return [(rho*deltaRho, (phi+(deltaPhi*2*np.pi/self.rotationInvariance))%(2*np.pi), *params) for (rho, phi, *params) in self.tuples]
+		return [(rho*deltaRho, (phi+(deltaPhi/self.rotationInvariance*np.pi))%(2*np.pi), *params) for (rho, phi, *params) in self.tuples]
 
 	# Function to compute the weighted geometric mean
 	# of a list of responses
