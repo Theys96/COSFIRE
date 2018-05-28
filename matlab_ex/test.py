@@ -6,6 +6,7 @@ from PIL import Image
 
 # Prototype image
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
+mask = np.asarray(Image.open('mask.png').convert('L'), dtype=np.float64)
 proto_asymm = np.asarray(Image.open('line_ending.png').convert('L'), dtype=np.float64)
 subject = np.asarray(Image.open('01_test_inv.tif').convert('L'), dtype=np.float64)
 (cx, cy) = (100,100)
@@ -40,8 +41,10 @@ result = result_symm + result_asymm
 # Stretching and binarization
 result_symm = c.rescaleImage(result_symm, 0, 255)
 result_asymm = c.rescaleImage(result_asymm, 0, 255)
+
+result = np.multiply(result, mask)
 result = c.rescaleImage(result, 0, 255)
-binaryResult = np.where(result > 9, 255, 0)
+binaryResult = np.where(result > 37, 255, 0)
 
 # Saving
 img_symm = Image.fromarray(result_symm.astype(np.uint8))

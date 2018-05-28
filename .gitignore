@@ -69,3 +69,5 @@ target/
 # Mac OS X
 .DS_Store
 examples/update
+matlab_ex/update
+matlab_ex/responses

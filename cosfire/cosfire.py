@@ -4,6 +4,7 @@ import math as m
 import numpy as np
 import scipy.stats.mstats as mstats
 import time
+from PIL import Image
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -64,6 +65,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					response = c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
 					curResponses.append( (response, rho) )
 
+					img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
+					img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
+
 				# Combine shifted filter responses
 				#curResult = self.weightedGeometricMean(curResponses)
 				curResult = self.weightedGeometricMean(curResponses)
@@ -123,7 +127,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			args = tupl[2:]
 
 			# First apply the chosen filter
-			filteredResponse = self.filt(*args).transform(subject)
+			filteredResponse = self.filt(*args).transform(subject).clip(0)
 
 			if self.alpha != 0:
 				for deltaRho in self.deltaRhoList:
