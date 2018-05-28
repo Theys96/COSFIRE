@@ -42,7 +42,7 @@ result = result_symm + result_asymm
 result_symm = c.rescaleImage(result_symm, 0, 255)
 result_asymm = c.rescaleImage(result_asymm, 0, 255)
 
-result = np.multiply(result, mask)
+#result = np.multiply(result, mask)
 result = c.rescaleImage(result, 0, 255)
 binaryResult = np.where(result > 37, 255, 0)
 
