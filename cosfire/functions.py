@@ -7,20 +7,22 @@ def circularPeaks(array):
     n = len(array)
     up = array[0] > array[n-1]
     maxima = []
+    #print(array)
     for i, val in enumerate(array):
         #i = i[0]
         added = False
         if i == n-1:
-            if up and array[0] <= val:
+            if up and array[0]+0.00005 < val: # +0.00005 Required for precision errors
                 maxima.append(i)
                 added = True
         else:
-            if up and (array[i+1] <= val):
+            if up and (array[i+1]+0.00005 <= val): # +0.00005 Required for precision errors
                 maxima.append(i)
                 added = True
                 up = not up
-            elif not up and (array[i+1] > val):
+            elif not up and (array[i+1] > val+0.00005):
                 up = not up
+    #print(maxima)
     return maxima
 
 # Set all values < factor*max to 0

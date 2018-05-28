@@ -29,12 +29,13 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.sigma0 = sigma0
 		self.alpha = alpha
 		self.precision = precision
-		self.deltaRhoList = [0.3, 0.5, 0.8, 1, 1.5]
+		self.deltaRhoList = [1]
 
 	def fit(self, prototype, center):
 		self.prototype = prototype
 		self.center = center
 		self.protoStack = c.ImageStack().push(prototype).applyFilter(self.filt, self.filterArgs)
+		#print(self.filt(*self.filterArgs).pargs[0])
 		self.protoStack.T1 = self.T1
 		self.tuples = self.findTuples()
 
