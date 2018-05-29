@@ -60,8 +60,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					rho = tupl[0]
 					phi = tupl[1]
 					args = tupl[2:]
-					dx = int(round(rho*np.cos(phi)))
-					dy = int(round(rho*np.sin(phi)))
+					dx = int(round(-rho*np.cos(phi)))
+					dy = int(round(-rho*np.sin(phi)))
 					response = c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
 					curResponses.append( (response, rho) )
 
@@ -91,7 +91,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					tuples.append((rho, 0)+val[1])
 			elif rho > 0:
 				# Compute points on the circle of radius rho with center point (cx,cy)
-				coords = [ ( cx+int(round(rho*np.cos(phi))) , cy+int(round(rho*np.sin(phi))) )
+				coords = [ ( cx+int(round(-rho*np.cos(phi))) , cy+int(round(-rho*np.sin(phi))) )
 							for phi in
 								[i/360*2*np.pi for i in range(360)]
 						 ]
@@ -143,7 +143,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		return responses
 
 	def computeTuples(self, deltaPhi, deltaRho):
-		return [(rho*deltaRho, (phi+(deltaPhi/self.rotationInvariance*np.pi))%(2*np.pi), *params) for (rho, phi, *params) in self.tuples]
+		return [(rho*deltaRho, (phi+(deltaPhi/self.rotationInvariance*np.pi)), *params) for (rho, phi, *params) in self.tuples]
 
 	# Function to compute the weighted geometric mean
 	# of a list of responses
