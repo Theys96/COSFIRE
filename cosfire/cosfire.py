@@ -22,10 +22,11 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1]):
+	def __init__(self, filt, filterArgs, rhoList, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
+		self.T2 = T2
 		self.rhoList = rhoList
 		self.sigma0 = sigma0/6
 		self.alpha = alpha/6
@@ -36,7 +37,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.prototype = prototype
 		self.center = center
 		self.protoStack = c.ImageStack().push(prototype).applyFilter(self.filt, self.filterArgs)
-		self.protoStack.T1 = self.T1
+		self.protoStack.treshold = self.T2
 		self.tuples = self.findTuples()
 
 	def transform(self, subject):
@@ -49,8 +50,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			return (tupl[0],c.approx(tupl[1]))+tupl[2:]
 
 		result = np.zeros(subject.shape)
-		for psi in self.rotationInvariance:  # rotation invariance
-			for upsilon in self.scaleInvariance:    # scale invariance
+		for psi in self.rotationInvariance:
+			for upsilon in self.scaleInvariance:
 				# Adjust base tuples
 				curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
 
@@ -70,8 +71,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					curResponses.append( response )
 
 					# Save responses for later reference
-					img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
-					img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
+					#img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
+					#img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
 
 				# Combine shifted filter responses
 				#curResult = self.weightedGeometricMean(curResponses)
@@ -132,12 +133,19 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			args = tupl[2:]
 
 			# First apply the chosen filter
-			filteredResponse = self.filt(*args).transform(subject).clip(0)
+			filteredResponse = self.filt(*args).transform(subject)
+			# ReLU
+			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
+
+			# Save response for later reference
+			img = Image.fromarray((filteredResponse*255).astype(np.uint8))
+			img.save("results/{}.png".format(args[0]))
 
 			if self.alpha != 0:
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
-					blurredResponse = c.GaussianFilter(self.sigma0 + localRho*self.alpha).transform(filteredResponse)
+					localSigma = self.sigma0 + localRho*self.alpha
+					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6)) ).transform(filteredResponse)
 					responses[(localRho,)+args] = blurredResponse
 			else:
 				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponse)
