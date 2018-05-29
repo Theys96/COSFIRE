@@ -142,7 +142,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 
 			# Save response for later reference
-			img = Image.fromarray(filteredResponse.astype(np.uint8))
+			img = Image.fromarray(round(filteredResponse*255).astype(np.uint8))
 			img.save("responses/{}.png".format(args[0]))
 
 			if self.alpha != 0:

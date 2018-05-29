@@ -17,3 +17,4 @@ result = img1 - img2
 print(result)
 print(np.max(result))
 print(np.min(result))
+print(np.sum(result))
