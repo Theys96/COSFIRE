@@ -12,7 +12,7 @@ class TestMethods(unittest.TestCase):
         from PIL import Image
 
         # Prototype image
-        proto = np.asarray(Image.open('examples/prototype1.png').convert('L'), dtype=np.float64)
+        proto = np.asarray(Image.open('matlab_ex/line.png').convert('L'), dtype=np.float64)
         cx, cy = (50,50)
 
         # Create COSFIRE operator and fit it with the prototype
