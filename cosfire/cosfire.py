@@ -22,7 +22,7 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, rotationInvariance=12):
+	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, rotationInvariance=[0]):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
@@ -49,10 +49,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			return (tupl[0],c.approx(tupl[1]))+tupl[2:]
 
 		result = np.zeros(subject.shape)
-		for deltaPhi in range(self.rotationInvariance):   # rotation invariance
-			for deltaRho in self.deltaRhoList:   # scale invariance
+		for deltaPhi in self.rotationInvariance:  # rotation invariance
+			for deltaRho in self.deltaRhoList:    # scale invariance
 				# Adjust base tuples
-				curTuples = self.computeTuples(deltaPhi, deltaRho)
+				curTuples = [(rho*deltaRho, phi+deltaPhi, *params) for (rho, phi, *params) in self.tuples]
 
 				# Collect shifted filter responses
 				curResponses = []
@@ -141,9 +141,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					responses[(localRho,)+args] = blurredResponse
 
 		return responses
-
-	def computeTuples(self, deltaPhi, deltaRho):
-		return [(rho*deltaRho, (phi+(deltaPhi/self.rotationInvariance*np.pi)), *params) for (rho, phi, *params) in self.tuples]
 
 	# Function to compute the weighted geometric mean
 	# of a list of responses
