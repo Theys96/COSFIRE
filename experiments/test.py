@@ -4,9 +4,11 @@ import math as m
 import cv2
 import time
 from PIL import Image
+import sys
 #import matplotlib.pyplot as plt
 
 global_timings = []
+numthreads = 1 if len(sys.argv) < 2 else int(sys.argv[1])
 
 # Prototype image
 t0 = time.time()                  # Time point
@@ -22,7 +24,7 @@ global_timings.append( ("Loading in the prototype(.png), mask(.png) and input(.c
 t1 = time.time()                  # Time point
 cosfire_symm = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(12)/12*np.pi
+		rotationInvariance = np.arange(12)/12*np.pi, numthreads = numthreads
 	   ).fit(proto_symm, (cx, cy))
 
 # Store timing
@@ -38,7 +40,7 @@ global_timings.append( ("Transforming the subject with the symmetrical filter", 
 t3 = time.time()                  # Time point
 cosfire_asymm = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (1.8, 1), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
-		rotationInvariance = np.arange(24)/12*np.pi
+		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads
 	   ).fit(proto_symm, (cx, cy))
 # Make asymmetrical
 asymmTuples = []
@@ -88,12 +90,12 @@ imgBinary.save('output_binary.tif')
 
 global_timings.append( ("Storing results to file", time.time()-t6) )
 
-print("\n --- TIME MEASUREMENTS (Symmetric Filter) --- ")
+print("\n --- TIME MEASUREMENTS: Symmetric Filter, {} thread(s) --- ".format(numthreads))
 for timing in cosfire_symm.strategy.timings:
 	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
-print("\n --- TIME MEASUREMENTS (Asymmetric Filter) --- ")
+print("\n --- TIME MEASUREMENTS: Asymmetric Filter, {} thread(s) --- ".format(numthreads))
 for timing in cosfire_asymm.strategy.timings:
 	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
-print("\n --- TIME MEASUREMENTS (Global) --- ")
+print("\n --- TIME MEASUREMENTS: Global, {} thread(s) --- ".format(numthreads))
 for timing in global_timings:
 	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )

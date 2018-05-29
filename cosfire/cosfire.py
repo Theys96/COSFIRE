@@ -5,6 +5,7 @@ import numpy as np
 import scipy.stats.mstats as mstats
 import time
 import time
+from multiprocessing.dummy import Pool as ThreadPool
 from PIL import Image
 
 class COSFIRE(BaseEstimator, TransformerMixin):
@@ -23,7 +24,7 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2):
+	def __init__(self, filt, filterArgs, rhoList, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2, numthreads=1):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
@@ -34,6 +35,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
+		self.pool = ThreadPool(numthreads)
 
 	def fit(self, prototype, center):
 		self.prototype = prototype
@@ -46,48 +48,56 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		t0 = time.time()                                         # Time point
 
 		# Precompute all blurred filter responses
-		responses = self.computeResponses(subject)
+		self.responses = self.computeResponses(subject)
 
 		# Store timing
-		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(responses)), time.time()-t0) )
+		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
 
 		t1 = time.time()                                         # Time point
-		result = np.zeros(subject.shape)
+
+		variations = []
 		for psi in self.rotationInvariance:
 			for upsilon in self.scaleInvariance:
-				t2 = time.time()                                 # Time point
+				variations.append( (psi, upsilon) )
 
-				# Adjust base tuples
-				curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
-
-				# Collect shifted filter responses
-				curResponses = []
-				for tupl in curTuples:
-					rho = tupl[0]
-					phi = tupl[1]
-					args = tupl[2:]
-					dx = int(round(rho*np.cos(phi)))
-					dy = int(round(-rho*np.sin(phi)))
-
-					# Apply shift
-					response = c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
-
-					# Add to set of responses
-					#curResponses.append( (response, rho) )
-					curResponses.append( response )
-
-				# Combine shifted filter responses
-				#curResult = self.weightedGeometricMean(curResponses)
-				curResult = mstats.gmean(curResponses)
-
-				# Include it in the final result
-				result = np.maximum(result, curResult)
-
-				# Store timing
-				self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t2) )
+		results = self.pool.map(self.shiftCombine, variations)
+		result = np.amax(results, axis=0)
 
 		# Store timing
 		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
+
+		return result
+
+	def shiftCombine( self, variation ):
+		psi = variation[0]
+		upsilon = variation[1]
+		t2 = time.time()                                 # Time point
+
+		# Adjust base tuples
+		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
+
+		# Collect shifted filter responses
+		curResponses = []
+		for tupl in curTuples:
+			rho = tupl[0]
+			phi = tupl[1]
+			args = tupl[2:]
+			dx = int(round(rho*np.cos(phi)))
+			dy = int(round(-rho*np.sin(phi)))
+
+			# Apply shift
+			response = c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
+
+			# Add to set of responses
+			#curResponses.append( (response, rho) )
+			curResponses.append( response )
+
+		# Combine shifted filter responses
+		#curResult = self.weightedGeometricMean(curResponses)
+		result = mstats.gmean(curResponses)
+
+		# Store timing
+		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t2) )
 
 		return result
 
