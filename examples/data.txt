@@ -1,5 +1,0 @@
-Retina Image size: 584×565 
-Each pixel / 255 #why?
-
-The segmented (binary) image is the respimage with threshold 37\
-#why respimage.tif differes from matlab figure?
