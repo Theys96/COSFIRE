@@ -33,7 +33,14 @@ def _sepFilter2D(image, kernel):
 
 # Executes a 2D convolution by using a 2D kernel
 def _Filter2D(image, kernel):
-    return signal.convolve(image, kernel, mode='same')
+    '''
+    padX = int((kernel.shape[0]-1)/2)
+    padY = int((kernel.shape[1]-1)/2)
+    result = signal.convolve(image, kernel, mode='valid')
+    result = np.pad(result, ((padY, padY), (padX, padX)), 'constant', constant_values=((0,0),(0,0)))
+    '''
+    result = signal.convolve(image, kernel, mode='same')
+    return result
 
 def sigma2sz(sigma):
     return m.ceil(sigma*3)*2 + 1; # Guaranteed to be odd

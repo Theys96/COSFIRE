@@ -65,7 +65,7 @@ class ImageStack():
 
         # Apply all possible filters
         def apply(stack, item, filt, argList):
-            stack.extend([ImageObject(filt(*tupl).transform(item.image), params=tupl) for tupl in argList])
+            stack.extend([ImageObject(filt(*tupl).transform(item.image).clip(0), params=tupl) for tupl in argList])
         self.applyAllCurrent(apply, filt, argList)
 
         return self
@@ -77,5 +77,7 @@ class ImageStack():
             if img.image[y][x] > val:
                 val = img.image[y][x]
                 params = img.params
-        return val,params
-
+        if val == self.T1:
+            return 0,None
+        else:
+            return val,params

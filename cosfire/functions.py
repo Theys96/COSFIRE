@@ -5,22 +5,25 @@ import numpy as np
 # Returns: array of indices
 def circularPeaks(array):
     n = len(array)
-    up = array[0] > array[n-1]
+    d = 0.00005    # Small error correction
     maxima = []
     for i, val in enumerate(array):
-        #i = i[0]
-        added = False
-        if i == n-1:
-            if up and array[0] <= val:
+        if (array[(i-1)%n]+d < val and array[(i+1)%n]+d < val):
+            maxima.append(i)
+        elif (abs(array[(i-1)%n] - val) < d and abs(array[(i+1)%n] - val) < d):
+            l = r = 0
+            k = 1
+            while (abs(array[(i-k)%n] - val) < d):
+                l += 1; k += 1
+            if (array[(i-k)%n] > val+d):
+                l = 0
+            k = 1
+            while (abs(array[(i+k)%n] - val) < d):
+                r += 1; k += 1
+            if (array[(i+k)%n] > val+d):
+                r = 0
+            if (l > 0 and r > 0 and (l == r or l + 1 == r)):
                 maxima.append(i)
-                added = True
-        else:
-            if up and (array[i+1] <= val):
-                maxima.append(i)
-                added = True
-                up = not up
-            elif not up and (array[i+1] > val):
-                up = not up
     return maxima
 
 # Set all values < factor*max to 0
@@ -32,10 +35,22 @@ def suppress(image, factor):
     return supImage
 
 def normalize(image):
-    image -= image.min()
-    return image/image.max()
+    mn = image.min()
+    mx = image.max()
+    image -= mn
+    return image/(mx-mn)
+
+def approx(float):
+    return round(float, 3)
+
+def rescaleImage(image, mn, mx):
+    image = normalize(image)*(mx-mn)
+    image += mn
+    return image
 
 def shiftImage(image, dx, dy):
+    '''
+    # FOR SHIFTING WITHOUT ROLLING
     shift = image[-dy:,:] if dy <= 0 else image[:-dy,:]
     shift = shift[:,-dx:] if dx <= 0 else shift[:,:-dx]
     pad = np.zeros((np.absolute(dy), shift.shape[1]))
@@ -45,5 +60,4 @@ def shiftImage(image, dx, dy):
     '''
     shift = np.roll(image, dx, axis=1)
     shift = np.roll(shift, dy, axis=0)
-    '''
     return shift
