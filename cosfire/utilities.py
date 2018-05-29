@@ -17,7 +17,7 @@ class ImageStack():
 
     def __init__(self):
         self.stack = []
-        self.T1 = 0
+        self.threshold = 0
 
     def push(self, image):
         if type(image) is ImageObject:
@@ -64,20 +64,27 @@ class ImageStack():
                 argList = [tupl + (arg,) for tupl in argList]
 
         # Apply all possible filters
-        def apply(stack, item, filt, argList):
-            stack.extend([ImageObject(filt(*tupl).transform(item.image).clip(0), params=tupl) for tupl in argList])
-        self.applyAllCurrent(apply, filt, argList)
+        def applyFilter(stack, item, filt, argList):
+            responses = [ImageObject(filt(*tupl).transform(item.image), params=tupl) for tupl in argList]
+            stack.extend(responses)
+
+        def applyTreshold(stack, item, treshold):
+            tresh = treshold*np.max(item.image)
+            stack.append( ImageObject(np.where(item.image > tresh, item.image, 0), params=item.params) )
+
+        self.applyAllCurrent(applyFilter, filt, argList)
+        self.applyAllCurrent(applyTreshold, self.threshold)
 
         return self
 
     def valueAtPoint(self, x, y):
-        val = self.T1
+        val = 0
         params = None
         for img in self.stack:
             if img.image[y][x] > val:
                 val = img.image[y][x]
                 params = img.params
-        if val == self.T1:
-            return 0,None
-        else:
+        if val > 0:
             return val,params
+        else:
+            return 0,None

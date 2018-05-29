@@ -6,8 +6,9 @@ from .base import FunctionFilter
 import numpy as np
 
 class GaussianFilter(FunctionFilter):
-    def __init__(self, sigma):
-        kernel = cv2.getGaussianKernel(sigma2sz(sigma), sigma)
+    def __init__(self, sigma, sz=0):
+        sz = sigma2sz(sigma) if sz == 0 else sz
+        kernel = cv2.getGaussianKernel(sz, sigma)
         super().__init__(_sepFilter2D, kernel)
 
 class DoGFilter(FunctionFilter):
