@@ -133,7 +133,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			args = tupl[2:]
 
 			# Save response for later reference
-			img = Image.fromarray(c.rescaleImage(subject, 0, 255).astype(np.uint8))
+			img = Image.fromarray(subject.astype(np.uint8))
 			img.save("responses/inputImage.png".format(args[0]))
 
 			# First apply the chosen filter
@@ -142,7 +142,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 
 			# Save response for later reference
-			img = Image.fromarray(c.rescaleImage(filteredResponse, 0, 255).astype(np.uint8))
+			img = Image.fromarray(filteredResponse.astype(np.uint8))
 			img.save("responses/{}.png".format(args[0]))
 
 			if self.alpha != 0:

@@ -1,6 +1,7 @@
 import cosfire as c
 import numpy as np
 import math as m
+import cv2
 from PIL import Image
 #import matplotlib.pyplot as plt
 
