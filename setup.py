@@ -11,7 +11,7 @@ with open('requirements.txt') as f:
     INSTALL_REQUIRES = [l.strip() for l in f.readlines() if l]
 
 setup(name='COSFIRE',
-      version='0.2.1',
+      version='0.3.0',
       description='COSFIRE machine learning and image processing',
       packages=find_packages(),
       install_requires=INSTALL_REQUIRES,
