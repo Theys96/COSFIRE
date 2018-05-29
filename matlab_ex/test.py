@@ -13,14 +13,14 @@ subject = np.asarray(Image.open('input.tif').convert('L'), dtype=np.float64)
 # Create COSFIRE operator and fit it with the prototype
 print("ROT1 starts here! @@@@@@")
 cosfire_symm = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,9,2), sigma0=3/6,  alpha=0.7/6,
+		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
 		rotationInvariance = np.arange(12)/12*np.pi
 	   ).fit(proto_symm, (cx, cy))
 result_symm = cosfire_symm.transform(subject)
 
 print("ROT2 starts here! @@@@@@")
 cosfire_asymm = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (1.8, 1), rhoList=range(0,23,2), sigma0=2/6,  alpha=0.1/6,
+		c.CircleStrategy, c.DoGFilter, (1.8, 1), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
 		rotationInvariance = np.arange(24)/12*np.pi
 	   ).fit(proto_symm, (cx, cy))
 

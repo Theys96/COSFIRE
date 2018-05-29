@@ -22,15 +22,15 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, rotationInvariance=[0]):
+	def __init__(self, filt, filterArgs, rhoList, T1=0.2, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1]):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
 		self.rhoList = rhoList
-		self.sigma0 = sigma0
-		self.alpha = alpha
+		self.sigma0 = sigma0/6
+		self.alpha = alpha/6
 		self.rotationInvariance = rotationInvariance
-		self.deltaRhoList = [1]
+		self.scaleInvariance = scaleInvariance
 
 	def fit(self, prototype, center):
 		self.prototype = prototype
@@ -49,10 +49,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			return (tupl[0],c.approx(tupl[1]))+tupl[2:]
 
 		result = np.zeros(subject.shape)
-		for deltaPhi in self.rotationInvariance:  # rotation invariance
-			for deltaRho in self.deltaRhoList:    # scale invariance
+		for psi in self.rotationInvariance:  # rotation invariance
+			for upsilon in self.scaleInvariance:    # scale invariance
 				# Adjust base tuples
-				curTuples = [(rho*deltaRho, phi+deltaPhi, *params) for (rho, phi, *params) in self.tuples]
+				curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
 
 				# Collect shifted filter responses
 				curResponses = []
@@ -62,15 +62,20 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					args = tupl[2:]
 					dx = int(round(rho*np.cos(phi)))
 					dy = int(round(-rho*np.sin(phi)))
-					response = c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
-					curResponses.append( (response, rho) )
 
+					# Apply shift
+					response = c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
+
+					# Add to set of responses
+					curResponses.append( response )
+
+					# Save responses for later reference
 					img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
 					img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
 
 				# Combine shifted filter responses
 				#curResult = self.weightedGeometricMean(curResponses)
-				curResult = self.weightedGeometricMean(curResponses)
+				curResult = mstats.gmean(curResponses)
 
 				# Include it in the final result
 				result = np.maximum(result, curResult)
@@ -113,7 +118,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def computeResponses(self, subject):
 		# We require a response for:
-		#  - every possible rho (rho*deltaRho)
+		#  - every possible rho (rho*upsilon)
 		#  - every possible phi (all precision angles)
 
 		# Response steps (all but shifting is interchangable in sequence):
@@ -130,14 +135,14 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponse = self.filt(*args).transform(subject).clip(0)
 
 			if self.alpha != 0:
-				for deltaRho in self.deltaRhoList:
-					localRho = rho * deltaRho
+				for upsilon in self.scaleInvariance:
+					localRho = rho * upsilon
 					blurredResponse = c.GaussianFilter(self.sigma0 + localRho*self.alpha).transform(filteredResponse)
 					responses[(localRho,)+args] = blurredResponse
 			else:
 				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponse)
-				for deltaRho in self.deltaRhoList:
-					localRho = rho * deltaRho
+				for upsilon in self.scaleInvariance:
+					localRho = rho * upsilon
 					responses[(localRho,)+args] = blurredResponse
 
 		return responses
