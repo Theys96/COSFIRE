@@ -8,7 +8,8 @@ from PIL import Image
 # Prototype image
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
 mask = np.asarray(Image.open('mask.png').convert('L'), dtype=np.float64)
-subject = np.asarray(Image.open('input.png').convert('L'), dtype=np.float64)
+#subject = np.asarray(Image.open('input.png').convert('L'), dtype=np.float64)
+subject = np.loadtxt('input.csv', delimiter=',')
 (cx, cy) = (100,100)
 
 # Create COSFIRE operator and fit it with the prototype
