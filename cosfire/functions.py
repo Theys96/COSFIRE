@@ -61,3 +61,10 @@ def shiftImage(image, dx, dy):
     shift = np.roll(image, dx, axis=1)
     shift = np.roll(shift, dy, axis=0)
     return shift
+
+def unique(list):
+    unique_list = []
+    for x in list:
+        if x not in unique_list:
+            unique_list.append(x)
+    return unique_list
