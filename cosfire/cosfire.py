@@ -68,11 +68,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					response = c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
 
 					# Add to set of responses
+					#curResponses.append( (response, rho) )
 					curResponses.append( response )
-
-					# Save responses for later reference
-					#img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
-					#img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
 
 				# Combine shifted filter responses
 				#curResult = self.weightedGeometricMean(curResponses)
@@ -118,37 +115,34 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		return tuples
 
 	def computeResponses(self, subject):
-		# We require a response for:
-		#  - every possible rho (rho*upsilon)
-		#  - every possible phi (all precision angles)
-
-		# Response steps (all but shifting is interchangable in sequence):
+		# Response steps:
 		#  - apply the filter
+		#  - trim off values < T1
 		#  - apply blurring
-		#  - shift the response
+
+		uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
+		filteredResponses = {}
+		for args in uniqueArgs:
+			# First apply the chosen filter
+			filteredResponse = self.filt(*args).transform(subject)
+			# ReLU
+			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
+			# Save response
+			filteredResponses[args] = filteredResponse
 
 		responses = {}
 		for tupl in self.tuples:
 			rho = tupl[0]
 			args = tupl[2:]
 
-			# First apply the chosen filter
-			filteredResponse = self.filt(*args).transform(subject)
-			# ReLU
-			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
-
-			# Save response for later reference
-			img = Image.fromarray((filteredResponse*255).astype(np.uint8))
-			img.save("results/{}.png".format(args[0]))
-
 			if self.alpha != 0:
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
 					localSigma = self.sigma0 + localRho*self.alpha
-					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6)) ).transform(filteredResponse)
+					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6)) ).transform(filteredResponses[args])
 					responses[(localRho,)+args] = blurredResponse
 			else:
-				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponse)
+				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponses[args])
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
 					responses[(localRho,)+args] = blurredResponse
