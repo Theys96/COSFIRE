@@ -4,6 +4,7 @@ import math as m
 import numpy as np
 import scipy.stats.mstats as mstats
 import time
+import time
 from PIL import Image
 
 class COSFIRE(BaseEstimator, TransformerMixin):
@@ -32,6 +33,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.alpha = alpha/6
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
+		self.timings = []
 
 	def fit(self, prototype, center):
 		self.prototype = prototype
@@ -41,17 +43,20 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.tuples = self.findTuples()
 
 	def transform(self, subject):
+		t0 = time.time()                                         # Time point
 
 		# Precompute all blurred filter responses
 		responses = self.computeResponses(subject)
 
-		# Shifting and putting them together
-		def approxTupl(tupl):
-			return (tupl[0],c.approx(tupl[1]))+tupl[2:]
+		# Store timing
+		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(responses)), time.time()-t0) )
 
+		t1 = time.time()                                         # Time point
 		result = np.zeros(subject.shape)
 		for psi in self.rotationInvariance:
 			for upsilon in self.scaleInvariance:
+				t2 = time.time()                                 # Time point
+
 				# Adjust base tuples
 				curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
 
@@ -78,6 +83,12 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				# Include it in the final result
 				result = np.maximum(result, curResult)
 
+				# Store timing
+				self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t2) )
+
+		# Store timing
+		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
+
 		return result
 
 	def findTuples(self):
@@ -85,8 +96,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		(cx, cy) = self.center
 		tuples = []
 
+		t0 = time.time()                                     # Time point
 		# Go over every rho (radius of circles)
 		for rho in self.rhoList:
+			t1 = time.time()                                 # Time point
 			if rho == 0:
 				# Circle with no radius, so just the center point
 				val = self.protoStack.valueAtPoint(cx, cy)
@@ -111,7 +124,13 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					dy = vals[i][3] - cy
 					phi = (m.atan2(dy, dx))%(2*m.pi)
 					tuples.append( (rho,phi)+vals[i][1] )
-				#tuples.extend([ (rho, i*np.pi/360*2)+vals[i][1] for i in maxima])
+
+			# Store timing
+			self.timings.append( ("\tFinding tuples for rho={}".format(rho), time.time()-t1) )
+
+		# Store timing
+		self.timings.append( ("Finding all {} tuples for {} different values of rho".format(len(tuples), len(self.rhoList)), time.time()-t0) )
+
 		return tuples
 
 	def computeResponses(self, subject):
@@ -119,6 +138,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		#  - apply the filter
 		#  - trim off values < T1
 		#  - apply blurring
+
+		t0 = time.time()                                 # Time point
 
 		uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
 		filteredResponses = {}
@@ -129,6 +150,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 			# Save response
 			filteredResponses[args] = filteredResponse
+
+		# Store timing
+		self.timings.append( ("\tApplying {} filter(s)".format(len(filteredResponses)), time.time()-t0) )
+		t1 = time.time()                                 # Time point
 
 		responses = {}
 		for tupl in self.tuples:
@@ -146,6 +171,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
 					responses[(localRho,)+args] = blurredResponse
+
+		# Store timing
+		self.timings.append( ("\tComputing {} blurred filter response(s)".format(len(responses)), time.time()-t1) )
 
 		return responses
 
