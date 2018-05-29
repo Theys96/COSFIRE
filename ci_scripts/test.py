@@ -5,21 +5,21 @@ class TestMethods(unittest.TestCase):
     def test_import(self):
         import cosfire
 
-    def test_DOGfilter(self):
-        import cosfire
-        sigma = 2.6
-        filter_DoG = cosfire.DoGFilter(sigma,1) #onoff = 1
-        mathlab_output = [0]
-        self.assertEqual(filter, mathlab_output)
+    # Simple test for initialization and running of some of the library's components
+    def test_init(self):
+        import cosfire as c
+        import numpy as np
+        from PIL import Image
 
-"""
-    def test_split(self):
-        s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
-        # check that s.split fails when the separator is not a string
-        with self.assertRaises(TypeError):
-            s.split(2)
-"""
+        # Prototype image
+        proto = np.asarray(Image.open('examples/prototype1.png').convert('L'), dtype=np.float64)
+        cx, cy = (50,50)
+
+        # Create COSFIRE operator and fit it with the prototype
+        cosf = c.COSFIRE(
+                c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), [0,10,20,40]
+               ).fit(proto, (cx, cy))
+
 
 if __name__ == '__main__':
     unittest.main()
