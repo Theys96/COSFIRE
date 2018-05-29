@@ -71,8 +71,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 					curResponses.append( response )
 
 					# Save responses for later reference
-					img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
-					img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
+					#img = Image.fromarray(c.rescaleImage(response, 0, 255).astype(np.uint8))
+					#img.save("responses/{}_{}_{}.tif".format(rho, c.approx(phi), args[0]))
 
 				# Combine shifted filter responses
 				#curResult = self.weightedGeometricMean(curResponses)
@@ -132,18 +132,14 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			rho = tupl[0]
 			args = tupl[2:]
 
-			# Save response for later reference
-			img = Image.fromarray(subject.astype(np.uint8))
-			img.save("responses/inputImage.png".format(args[0]))
-
 			# First apply the chosen filter
 			filteredResponse = self.filt(*args).transform(subject)
 			# ReLU
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 
 			# Save response for later reference
-			img = Image.fromarray(round(filteredResponse*255).astype(np.uint8))
-			img.save("responses/{}.png".format(args[0]))
+			img = Image.fromarray((filteredResponse*255).astype(np.uint8))
+			img.save("results/{}.png".format(args[0]))
 
 			if self.alpha != 0:
 				for upsilon in self.scaleInvariance:
