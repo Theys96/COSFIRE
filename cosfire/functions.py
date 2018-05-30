@@ -13,15 +13,19 @@ def circularPeaks(array):
         elif (abs(array[(i-1)%n] - val) < d and abs(array[(i+1)%n] - val) < d):
             l = r = 0
             k = 1
-            while (abs(array[(i-k)%n] - val) < d):
+            while (abs(array[(i-k)%n] - val) < d) and k < n:
                 l += 1; k += 1
             if (array[(i-k)%n] > val+d):
                 l = 0
+            if k == n:
+                return maxima
             k = 1
-            while (abs(array[(i+k)%n] - val) < d):
+            while (abs(array[(i+k)%n] - val) < d) and k < n:
                 r += 1; k += 1
             if (array[(i+k)%n] > val+d):
                 r = 0
+            if k == n:
+                return maxima
             if (l > 0 and r > 0 and (l == r or l + 1 == r)):
                 maxima.append(i)
     return maxima
@@ -60,6 +64,7 @@ def shiftImage(image, dx, dy):
     '''
     shift = np.roll(image, dx, axis=1)
     shift = np.roll(shift, dy, axis=0)
+    
     return shift
 
 def unique(list):
