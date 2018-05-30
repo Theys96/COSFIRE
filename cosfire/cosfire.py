@@ -50,6 +50,12 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# Precompute all blurred filter responses
 		self.responses = self.computeResponses(subject)
 
+		'''
+		for response in self.responses:
+			img = Image.fromarray((self.responses[response]*255).astype(np.uint8))
+			img.save('responses/rho{}phi{}.png'.format(response[0],response[1]))
+		'''
+
 		# Store timing
 		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
 

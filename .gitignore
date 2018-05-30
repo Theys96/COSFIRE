@@ -69,5 +69,6 @@ target/
 # Mac OS X
 .DS_Store
 comparison_matlab/update
+comparison_matlab2/update
 experiments/update
 experiments/responses
