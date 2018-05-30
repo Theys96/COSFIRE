@@ -5,6 +5,8 @@ import cv2
 from PIL import Image
 #import matplotlib.pyplot as plt
 
+numthreads = 4
+
 # Prototype image
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
 mask = np.asarray(Image.open('mask.png').convert('L'), dtype=np.float64)
@@ -16,14 +18,14 @@ subject = 1 - np.asarray(Image.open('01_test.tif').convert('RGB'), dtype=np.floa
 # Symmetrical filter
 cosfire_symm = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(12)/12*np.pi
+		rotationInvariance = np.arange(12)/12*np.pi, numthreads=numthreads
 	   ).fit(proto_symm, (cx, cy))
 result_symm = cosfire_symm.transform(subject)
 
 # Asymmetrical filter
 cosfire_asymm = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (1.8, 1), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
-		rotationInvariance = np.arange(24)/12*np.pi
+		rotationInvariance = np.arange(24)/12*np.pi, numthreads=numthreads
 	   ).fit(proto_symm, (cx, cy))
 # Make asymmetrical
 asymmTuples = []
@@ -56,3 +58,11 @@ img = Image.fromarray(result.astype(np.uint8))
 img.save('results/output.png')
 imgBinary = Image.fromarray(binaryResult.astype(np.uint8))
 imgBinary.save('results/output_binary.png')
+
+# timings
+print("\n --- TIME MEASUREMENTS: Symmetric Filter, {} thread(s) --- ".format(numthreads))
+for timing in cosfire_symm.strategy.timings:
+	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
+print("\n --- TIME MEASUREMENTS: Asymmetric Filter, {} thread(s) --- ".format(numthreads))
+for timing in cosfire_asymm.strategy.timings:
+	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
