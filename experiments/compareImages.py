@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from PIL import Image
-
+import cosfire as c
 
 if (len(sys.argv) < 3):
     if (len(sys.argv) == 2):
@@ -21,6 +21,9 @@ img1 = np.asarray(Image.open(name1).convert('L'), dtype=np.float64)
 img2 = np.asarray(Image.open(name2).convert('L'), dtype=np.float64)
 
 result = img1 - img2
+
+img = Image.fromarray(c.rescaleImage(result, 0, 255).astype(np.uint8))
+img.save('comparison.png')
 
 print(result)
 print(np.max(result))

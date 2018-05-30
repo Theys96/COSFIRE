@@ -178,7 +178,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponses[args] = filteredResponse
 
 		for response in filteredResponses:
-			print(filteredResponses[response][0:5,0:5])
 			img = Image.fromarray((np.round(filteredResponses[response]*255)).astype(np.uint8))
 			img.save('responses/sigma{}.png'.format(response[0]))
 
