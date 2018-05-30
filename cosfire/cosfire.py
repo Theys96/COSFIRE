@@ -55,6 +55,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		for response in self.responses:
 			img = Image.fromarray((np.round(self.responses[response]*255)).astype(np.uint8))
+			if (response[0] == 20):
+				print(self.responses[response][100:105,100:105])
 			img.save('responses/sigma{}rho{}.png'.format(response[1],response[0],self.sigma0+self.alpha*response[0]))
 
 		t1 = time.time()                                         # Time point
