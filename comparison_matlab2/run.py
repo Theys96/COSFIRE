@@ -66,9 +66,11 @@ imgBinary = Image.fromarray(binaryResult.astype(np.uint8))
 imgBinary.save('results/output_binary.png')
 
 # timings
+'''
 print("\n --- TIME MEASUREMENTS: Symmetric Filter, {} thread(s) --- ".format(numthreads))
 for timing in cosfire_symm.strategy.timings:
 	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
 print("\n --- TIME MEASUREMENTS: Asymmetric Filter, {} thread(s) --- ".format(numthreads))
 for timing in cosfire_asymm.strategy.timings:
 	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
+'''
