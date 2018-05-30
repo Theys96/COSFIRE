@@ -53,11 +53,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# Store timing
 		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
 
-		'''
 		for response in self.responses:
-			img = Image.fromarray((self.responses[response]).astype(np.uint8))
-			img.save('responses/rho{}phi{}.png'.format(response[0],response[1]))
-		'''
+			img = Image.fromarray((np.round(self.responses[response]*255)).astype(np.uint8))
+			img.save('responses/sigma{}rho{}.png'.format(response[1],response[0],self.sigma0+self.alpha*response[0]))
 
 		t1 = time.time()                                         # Time point
 
@@ -178,6 +176,11 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 			# Save response
 			filteredResponses[args] = filteredResponse
+
+		for response in filteredResponses:
+			print(filteredResponses[response][0:5,0:5])
+			img = Image.fromarray((np.round(filteredResponses[response]*255)).astype(np.uint8))
+			img.save('responses/sigma{}.png'.format(response[0]))
 
 		# Store timing
 		self.timings.append( ("\tApplying {} filter(s)".format(len(filteredResponses)), time.time()-t0) )

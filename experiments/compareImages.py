@@ -4,7 +4,15 @@ from PIL import Image
 
 
 if (len(sys.argv) < 3):
-    sys.exit("Give two image paths")
+    if (len(sys.argv) == 2):
+        name = sys.argv[1]
+        img = np.asarray(Image.open(name).convert('L'), dtype=np.float64)
+        print(img)
+        print(np.max(img))
+        print(np.min(img))
+        sys.exit()
+    else:
+        sys.exit("Give two image paths")
 
 name1 = sys.argv[1]
 name2 = sys.argv[2]

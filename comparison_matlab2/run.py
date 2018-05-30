@@ -10,8 +10,14 @@ numthreads = 4
 # Prototype image
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
 mask = np.asarray(Image.open('mask.png').convert('L'), dtype=np.float64)
-subject = 1 - np.asarray(Image.open('01_test.tif').convert('RGB'), dtype=np.float64)[:,:,1]
+subject = 255 - np.asarray(Image.open('01_test.tif').convert('RGB'), dtype=np.float64)[:,:,1]
+subject = subject/255
 (cx, cy) = (100,100)
+
+img = Image.fromarray((subject*255).astype(np.uint8))
+img.save('responses/subject.png')
+
+#print(subject[0:10,0:10]/255)
 
 # Create COSFIRE operator and fit it with the prototype
 
