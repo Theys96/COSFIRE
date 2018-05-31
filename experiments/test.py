@@ -15,7 +15,8 @@ t0 = time.time()                  # Time point
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
 (cx, cy) = (100,100)
 mask = np.asarray(Image.open('mask.png').convert('L'), dtype=np.float64)
-subject = np.loadtxt('input.csv', delimiter=',')
+subject = 255 - np.asarray(Image.open('01_test.tif').convert('RGB'), dtype=np.float64)[:,:,1]
+subject = subject/255
 
 # Store timing
 global_timings.append( ("Loading in the prototype(.png), mask(.png) and input(.csv)", time.time()-t0) )
@@ -59,8 +60,8 @@ result_asymm = cosfire_asymm.transform(subject)
 global_timings.append( ("Transforming the subject with the asymmetrical filter", time.time()-t4) )
 
 # Save filtered prototypes for reference
-Image.fromarray(c.rescaleImage(cosfire_symm.strategy.protoStack.stack[0].image, 0, 255).astype(np.uint8)).save('filtered_prototype_symm.tif')
-Image.fromarray(c.rescaleImage(cosfire_asymm.strategy.protoStack.stack[0].image, 0, 255).astype(np.uint8)).save('filtered_prototype_asymm.tif')
+Image.fromarray(c.rescaleImage(cosfire_symm.strategy.protoStack.stack[0].image, 0, 255).astype(np.uint8)).save('output/filtered_prototype_symm.png')
+Image.fromarray(c.rescaleImage(cosfire_asymm.strategy.protoStack.stack[0].image, 0, 255).astype(np.uint8)).save('output/filtered_prototype_asymm.png')
 
 t5 = time.time()                  # Time point
 
@@ -80,13 +81,13 @@ t6 = time.time()                  # Time point
 
 # Saving
 img_symm = Image.fromarray(result_symm.astype(np.uint8))
-img_symm.save('output_symm.tif')
+img_symm.save('output/output_symm.png')
 img_asymm = Image.fromarray(result_asymm.astype(np.uint8))
-img_asymm.save('output_asymm.tif')
+img_asymm.save('output/output_asymm.png')
 img = Image.fromarray(result.astype(np.uint8))
-img.save('output.tif')
+img.save('output/output.png')
 imgBinary = Image.fromarray(binaryResult.astype(np.uint8))
-imgBinary.save('output_binary.tif')
+imgBinary.save('output/output_binary.png')
 
 global_timings.append( ("Storing results to file", time.time()-t6) )
 

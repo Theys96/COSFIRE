@@ -53,14 +53,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# Store timing
 		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
 
-		#''' FOR DEBUG
-		for response in self.responses:
-			img = Image.fromarray((np.round(self.responses[response]*255)).astype(np.uint8))
-			if (response[0] == 20 or response[0] == 10):
-				np.savetxt('responses/sigma{}rho{}.csv'.format(response[1],response[0]), self.responses[response], delimiter=',')
-			img.save('responses/sigma{}rho{}.png'.format(response[1],response[0]))
-		#'''
-
 		t1 = time.time()                                         # Time point
 
 		variations = []
@@ -104,7 +96,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Combine shifted filter responses
 		# curResult = self.weightedGeometricMean(curResponses)
-		if (len(curResponses) > self.numthreads**2):      # Parallel version is probably faster
+		if (self.numthreads > 1 and len(curResponses) > self.numthreads**2):      # Parallel version is probably faster
 			a = np.split(curResponses, [len(curResponses)-(len(curResponses)%self.numthreads)])
 			b = np.split(a[0], self.numthreads)
 			b[self.numthreads-1] = np.append(b[self.numthreads-1], a[1])
@@ -180,12 +172,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 			# Save response
 			filteredResponses[args] = filteredResponse
-
-		''' FOR DEBUG
-		for response in filteredResponses:
-			img = Image.fromarray((np.round(filteredResponses[response]*255)).astype(np.uint8))
-			img.save('responses/sigma{}.png'.format(response[0]))
-		'''
 
 		# Store timing
 		self.timings.append( ("\tApplying {} filter(s)".format(len(filteredResponses)), time.time()-t0) )
