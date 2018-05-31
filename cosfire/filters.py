@@ -7,7 +7,7 @@ import numpy as np
 
 class GaussianFilter(FunctionFilter):
     def __init__(self, sigma, sz=0):
-        sz = sigma2sz(sigma) if sz == 0 else sz
+        sz = sigma2sz(sigma) if sz <= 0 else sz
         kernel = cv2.getGaussianKernel(sz, sigma)
         super().__init__(_sepFilter2D, kernel)
 
@@ -39,12 +39,6 @@ def _sepFilter2D(image, kernel):
 
 # Executes a 2D convolution by using a 2D kernel
 def _Filter2D(image, kernel):
-    '''
-    padX = int((kernel.shape[0]-1)/2)
-    padY = int((kernel.shape[1]-1)/2)
-    result = signal.convolve(image, kernel, mode='valid')
-    result = np.pad(result, ((padY, padY), (padX, padX)), 'constant', constant_values=((0,0),(0,0)))
-    '''
     result = signal.convolve(image, kernel, mode='same')
     return result
 

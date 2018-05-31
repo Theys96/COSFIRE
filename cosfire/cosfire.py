@@ -35,7 +35,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
-		self.pool = ThreadPool(numthreads)
+		self.numthreads = numthreads
 
 	def fit(self, prototype, center):
 		self.prototype = prototype
@@ -60,7 +60,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			for upsilon in self.scaleInvariance:
 				variations.append( (psi, upsilon) )
 
-		results = self.pool.map(self.shiftCombine, variations)
+		threadPool = ThreadPool(self.numthreads)
+		results = threadPool.map(self.shiftCombine, variations)
+		threadPool.close()
 		result = np.amax(results, axis=0)
 
 		# Store timing
@@ -71,7 +73,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def shiftCombine( self, variation ):
 		psi = variation[0]
 		upsilon = variation[1]
-		t2 = time.time()                                 # Time point
+		t0 = time.time()                                 # Time point
 
 		# Adjust base tuples
 		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
@@ -93,11 +95,21 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			curResponses.append( response )
 
 		# Combine shifted filter responses
-		#curResult = self.weightedGeometricMean(curResponses)
-		result = mstats.gmean(curResponses)
+		# curResult = self.weightedGeometricMean(curResponses)
+		if (self.numthreads > 1 and len(curResponses) > self.numthreads**2):      # Parallel version is probably faster
+			a = np.split(curResponses, [len(curResponses)-(len(curResponses)%self.numthreads)])
+			b = np.split(a[0], self.numthreads)
+			b[self.numthreads-1] = np.append(b[self.numthreads-1], a[1])
+			threadPool = ThreadPool(self.numthreads)
+			results = threadPool.map(np.multiply.reduce, b)
+			threadPool.close()
+			result = np.multiply.reduce(results)
+		else:                                             # Parallel version is probably not much faster
+			result = np.multiply.reduce(curResponses)
+			result = result**(1/len(curResponses))
 
 		# Store timing
-		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t2) )
+		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
 
 		return result
 
@@ -174,7 +186,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
 					localSigma = self.sigma0 + localRho*self.alpha
-					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6)) ).transform(filteredResponses[args])
+					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6))+(1-int(round(localSigma*6))%2)).transform(filteredResponses[args])
 					responses[(localRho,)+args] = blurredResponse
 			else:
 				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponses[args])
