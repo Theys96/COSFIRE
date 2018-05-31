@@ -24,10 +24,10 @@ timing_b = (time.time()-t0)*10
 print("cv2.sepFilter2D: {:4.2f}ms".format( timing_b ))
 '''
 
-#B_matlab_python = cv2.sepFilter2D(A_matlab, -1, k_matlab, k_matlab)
-B_matlab_python = signal.convolve(A_matlab, np.outer(k_matlab, k_matlab), mode='same')
-B_matlab_python = np.roll(B_matlab_python, -1, axis=0)
-B_matlab_python = np.roll(B_matlab_python, -1, axis=1)
+B_matlab_python = cv2.sepFilter2D(A_matlab, -1, k_matlab, k_matlab)
+#B_matlab_python = signal.convolve(A_matlab, np.outer(k_matlab, k_matlab), mode='same')
+#B_matlab_python = np.roll(B_matlab_python, -1, axis=0)
+#B_matlab_python = np.roll(B_matlab_python, -1, axis=1)
 
 #print(np.outer(k_matlab, k_matlab))
 
