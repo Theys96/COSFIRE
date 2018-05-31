@@ -53,13 +53,13 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# Store timing
 		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
 
-		''' FOR DEBUG
+		#''' FOR DEBUG
 		for response in self.responses:
 			img = Image.fromarray((np.round(self.responses[response]*255)).astype(np.uint8))
-			if (response[0] == 20):
-				print(self.responses[response][100:105,100:105])
-			img.save('responses/sigma{}rho{}.png'.format(response[1],response[0],self.sigma0+self.alpha*response[0]))
-		'''
+			if (response[0] == 20 or response[0] == 10):
+				np.savetxt('responses/sigma{}rho{}.csv'.format(response[1],response[0]), self.responses[response], delimiter=',')
+			img.save('responses/sigma{}rho{}.png'.format(response[1],response[0]))
+		#'''
 
 		t1 = time.time()                                         # Time point
 
@@ -200,7 +200,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
 					localSigma = self.sigma0 + localRho*self.alpha
-					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6)) ).transform(filteredResponses[args])
+					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6))+1).transform(filteredResponses[args])
 					responses[(localRho,)+args] = blurredResponse
 			else:
 				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponses[args])
