@@ -1,45 +1,60 @@
 import cosfire as c
 import numpy as np
-import math as m
-import cv2
-import sys
+import time
 from PIL import Image
-#import matplotlib.pyplot as plt
-
-numthreads = 4 if (len(sys.argv) < 2) else int(sys.argv[1])
-numiterations = 10 if (len(sys.argv) < 3) else int(sys.argv[2])
 
 # Prototype image
 proto = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
 subject = 1 - np.asarray(Image.open('01_test.tif').convert('RGB'), dtype=np.float64)[:,:,1]
 (cx, cy) = (100,100)
 
-timings = {}
+stats_tuples = []
+tuples_numthreads = 4
+for maxRho in range(2,30,2):
+    for i in range(3):
+        t0 = time.time()
+        cosfire = c.COSFIRE(
+    		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,maxRho,2), sigma0=3,  alpha=0.7,
+    		rotationInvariance = np.arange(24)/12*np.pi, numthreads = tuples_numthreads
+    	   ).fit(proto, (cx, cy))
+        cosfire.transform(subject)
+        numTuples = len(cosfire.strategy.tuples)
+        stats_tuples.append( (numTuples, 1000*(time.time()-t0)) )
 
-for i in range(numiterations):
-    cosfire = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,20,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads
-	   ).fit(proto, (cx, cy))
-    cosfire.transform(subject)
-    for t in cosfire.strategy.timings:
-        if not(t[0][0] == '\t'):
-            if t[0] in timings:
-                timings[t[0]].append(t[1])
-            else:
-                timings[t[0]] = [t[1]]
+stats_threads = []
+threads_numtuples = 0
+for numthreads in range(1,10):
+    for i in range(3):
+        t0 = time.time()
+        cosfire = c.COSFIRE(
+    		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,16,2), sigma0=3,  alpha=0.7,
+    		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads
+    	   ).fit(proto, (cx, cy))
+        cosfire.transform(subject)
+        threads_numtuples = len(cosfire.strategy.tuples)
+        stats_threads.append( (numthreads, 1000*(time.time()-t0)) )
 
-for step in timings:
-    print(step)
-    for t in timings[step]:
-        print("\t{:7.2f}ms".format(t*1000))
 
-'''
-# timings
-print("\n --- TIME MEASUREMENTS: Symmetric Filter, {} thread(s) --- ".format(numthreads))
-for timing in cosfire_symm.strategy.timings:
-	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
-print("\n --- TIME MEASUREMENTS: Asymmetric Filter, {} thread(s) --- ".format(numthreads))
-for timing in cosfire_asymm.strategy.timings:
-	print( "{:7.2f}ms\t{}".format(timing[1]*1000, timing[0]) )
-'''
+
+'''  --- Plotting --- '''
+import matplotlib.pyplot as plt
+stats_tuples = np.array(stats_tuples)
+stats_threads = np.array(stats_threads)
+
+f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+
+ax1.scatter(stats_tuples[:,0],stats_tuples[:,1])
+ax1.set_title('Number of tuples vs. time\n{} threads'.format(tuples_numthreads))
+ax1.axis([0,np.max(stats_tuples[:,0])*1.1,0,4000])
+ax1.set_xlabel('#Tuples')
+ax1.set_ylabel('Time (ms)')
+ax1.grid(True, 'major', 'y')
+
+ax2.scatter(stats_threads[:,0],stats_threads[:,1])
+ax2.set_title('Number of threads vs. time\n{} tuples'.format(threads_numtuples))
+ax2.axis([0,np.max(stats_threads[:,0])*1.1,0,4000])
+ax2.set_xlabel('#Threads')
+ax2.set_ylabel('Time (ms)')
+ax2.grid(True, 'major', 'y')
+
+plt.show()

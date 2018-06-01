@@ -96,7 +96,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Combine shifted filter responses
 		# curResult = self.weightedGeometricMean(curResponses)
-		if (self.numthreads > 1 and len(curResponses) > self.numthreads**2):      # Parallel version is probably faster
+		if (self.numthreads > 1):      # Parallel version is probably faster
 			a = np.split(curResponses, [len(curResponses)-(len(curResponses)%self.numthreads)])
 			b = np.split(a[0], self.numthreads)
 			b[self.numthreads-1] = np.append(b[self.numthreads-1], a[1])
