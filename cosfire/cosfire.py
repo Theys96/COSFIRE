@@ -3,6 +3,7 @@ import cosfire as c
 import math as m
 import numpy as np
 import time
+from multiprocessing.dummy import Pool
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -20,7 +21,7 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, prototype, center, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2):
+	def __init__(self, filt, filterArgs, rhoList, prototype, center, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2, numthreads=1):
 		self.filterArgs = self.convertFilterArgs(filterArgs) if type(filterArgs) is dict else filterArgs
 		self.filt = filt
 		self.T1 = T1
@@ -33,6 +34,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
+		self.numthreads = numthreads
+		if numthreads > 1:
+			self.pool = Pool(numthreads)
 
 	def fit(self):
 		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
@@ -56,7 +60,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				variations.append( (psi, upsilon) )
 
 		# Store the maximum of all the orientations
-		result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
+		if self.numthreads > 1:
+			result = np.amax(self.pool.map(self.shiftCombine, variations), axis=0)
+		else:
+			result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
 
 		# Store timing
 		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )

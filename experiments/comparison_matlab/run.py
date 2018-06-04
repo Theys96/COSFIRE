@@ -2,10 +2,11 @@ import cosfire as c
 import numpy as np
 import math as m
 import cv2
+import sys
 from PIL import Image
 #import matplotlib.pyplot as plt
 
-numthreads = 4
+numthreads = 1 if len(sys.argv) < 2 else int(sys.argv[1])
 
 # Prototype image
 proto_symm = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
@@ -21,14 +22,14 @@ img.save('responses/subject.png')
 # Symmetrical filter
 cosfire_symm = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (2.4, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(12)/12*np.pi
+		rotationInvariance = np.arange(12)/12*np.pi, numthreads=numthreads
 	   ).fit()
 result_symm = cosfire_symm.transform(subject)
 
 # Asymmetrical filter
 cosfire_asymm = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (1.8, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
-		rotationInvariance = np.arange(24)/12*np.pi
+		rotationInvariance = np.arange(24)/12*np.pi, numthreads=numthreads
 	   ).fit()
 # Make asymmetrical
 asymmTuples = []
