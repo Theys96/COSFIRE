@@ -79,23 +79,14 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
 
 		# Collect shifted filter responses
-		curResponses = []
-		for tupl in curTuples:
-			rho = tupl[0]
-			phi = tupl[1]
-			args = tupl[2:]
-			dx = int(round(rho*np.cos(phi)))
-			dy = int(round(-rho*np.sin(phi)))
-
-			# Apply shift
-			response = c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
-
-			# Add to set of responses
-			#curResponses.append( (response, rho) )    # For weighted geometric mean
-			curResponses.append( response )
+		if self.numthreads > 1:
+			tempPool = Pool(self.numthreads)
+			curResponses = tempPool.map(self.shiftResponse, curTuples)
+			tempPool.close()
+		else:
+			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
 
 		# Combine shifted filter responses
-		# curResult = self.weightedGeometricMean(curResponses)
 		result = np.multiply.reduce(curResponses)
 		result = result**(1/len(curResponses))
 
@@ -103,6 +94,16 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
 
 		return result
+
+	def shiftResponse(self, tupl):
+		rho = tupl[0]
+		phi = tupl[1]
+		args = tupl[2:]
+		dx = int(round(rho*np.cos(phi)))
+		dy = int(round(-rho*np.sin(phi)))
+
+		# Apply shift
+		return c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
 
 	def findTuples(self):
 		# Init some variables
