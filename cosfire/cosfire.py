@@ -4,6 +4,7 @@ import math as m
 import numpy as np
 import time
 from multiprocessing.dummy import Pool
+import multiprocessing as mp
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -37,6 +38,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.numthreads = numthreads
 		if numthreads > 1:
 			self.pool = Pool(numthreads)
+			self.pool2 = Pool(mp.cpu_count())
 
 	def fit(self):
 		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
@@ -80,9 +82,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Collect shifted filter responses
 		if self.numthreads > 1:
-			tempPool = Pool(self.numthreads)
-			curResponses = tempPool.map(self.shiftResponse, curTuples)
-			tempPool.close()
+			curResponses = sel.pool2.map(self.shiftResponse, curTuples)
 		else:
 			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
 
