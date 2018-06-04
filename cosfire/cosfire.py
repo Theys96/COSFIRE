@@ -21,7 +21,7 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def __init__(self, filt, filterArgs, rhoList, prototype, center, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2):
-		self.filterArgs = filterArgs
+		self.filterArgs = self.convertFilterArgs(filterArgs) if type(filterArgs) is dict else filterArgs
 		self.filt = filt
 		self.T1 = T1
 		self.T2 = T2
@@ -194,3 +194,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	        totalWeight += weight
 	        result = np.multiply(result, img[0]**weight)
 	    return result**(1/totalWeight)
+
+	def convertFilterArgs(self, dict):
+		if len(dict) == 2:
+			return (dict['sigma'], dict['onoff'])
+		if len(dict) == 5:
+			return (dict['sigma'], dict['theta'], dict['lambd'], dict['gamma'], dict['psi'])
+		return dict.items()
