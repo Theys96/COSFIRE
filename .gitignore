@@ -72,5 +72,4 @@ target/
 # Project specific
 experiments/update
 experiments/responses
-experiments/comparison_matlab/update
 experiments/comparison_matlab/responses

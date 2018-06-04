@@ -2,19 +2,15 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import cosfire as c
 import math as m
 import numpy as np
-import scipy.stats.mstats as mstats
 import time
-import time
-from multiprocessing.dummy import Pool as ThreadPool
-from PIL import Image
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
 	def __init__(self, strategy, *pargs, **kwargs):
 		self.strategy = strategy(*pargs, **kwargs)
 
-	def fit(self, prototype, *pargs, **kwargs):
-		self.strategy.fit(prototype, *pargs, **kwargs)
+	def fit(self, *pargs, **kwargs):
+		self.strategy.fit(*pargs, **kwargs)
 		return self;
 
 	def transform(self, prototype, *pargs, **kwargs):
@@ -24,23 +20,22 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2, numthreads=1):
+	def __init__(self, filt, filterArgs, rhoList, prototype, center, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2):
 		self.filterArgs = filterArgs
 		self.filt = filt
 		self.T1 = T1
 		self.T2 = T2
 		self.rhoList = rhoList
+		self.prototype = prototype
+		self.center = center
 		self.sigma0 = sigma0/6
 		self.alpha = alpha/6
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
-		self.numthreads = numthreads
 
-	def fit(self, prototype, center):
-		self.prototype = prototype
-		self.center = center
-		self.protoStack = c.ImageStack().push(prototype).applyFilter(self.filt, self.filterArgs)
+	def fit(self):
+		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
 		self.protoStack.treshold = self.T2
 		self.tuples = self.findTuples()
 
@@ -60,10 +55,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			for upsilon in self.scaleInvariance:
 				variations.append( (psi, upsilon) )
 
-		threadPool = ThreadPool(self.numthreads)
-		results = threadPool.map(self.shiftCombine, variations)
-		threadPool.close()
-		result = np.amax(results, axis=0)
+		# Store the maximum of all the orientations
+		result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
 
 		# Store timing
 		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
@@ -91,22 +84,13 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			response = c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
 
 			# Add to set of responses
-			#curResponses.append( (response, rho) )
+			#curResponses.append( (response, rho) )    # For weighted geometric mean
 			curResponses.append( response )
 
 		# Combine shifted filter responses
 		# curResult = self.weightedGeometricMean(curResponses)
-		if (self.numthreads > 1 and len(curResponses) > self.numthreads**2):      # Parallel version is probably faster
-			a = np.split(curResponses, [len(curResponses)-(len(curResponses)%self.numthreads)])
-			b = np.split(a[0], self.numthreads)
-			b[self.numthreads-1] = np.append(b[self.numthreads-1], a[1])
-			threadPool = ThreadPool(self.numthreads)
-			results = threadPool.map(np.multiply.reduce, b)
-			threadPool.close()
-			result = np.multiply.reduce(results)
-		else:                                             # Parallel version is probably not much faster
-			result = np.multiply.reduce(curResponses)
-			result = result**(1/len(curResponses))
+		result = np.multiply.reduce(curResponses)
+		result = result**(1/len(curResponses))
 
 		# Store timing
 		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
@@ -144,7 +128,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				for i in maxima:
 					dx = vals[i][2] - cx
 					dy = vals[i][3] - cy
-					phi = (m.atan2(dy, dx))%(2*m.pi)
+					phi = (np.arctan2(dy, dx))%(2*np.pi)
 					tuples.append( (rho,phi)+vals[i][1] )
 
 			# Store timing

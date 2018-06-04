@@ -1,5 +1,4 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-import math as m
 import cv2
 import scipy.signal as signal
 from .base import FunctionFilter
@@ -47,4 +46,4 @@ def _CLAHE(image, clahe):
     return clahe.apply(image)
 
 def sigma2sz(sigma):
-    return m.ceil(sigma*3)*2 + 1; # Guaranteed to be odd
+    return int(np.ceil(sigma*3))*2 + 1; # Guaranteed to be odd

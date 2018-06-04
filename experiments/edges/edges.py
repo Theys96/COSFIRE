@@ -8,9 +8,9 @@ subject = np.asarray(Image.open('rino.pgm').convert('L'), dtype=np.float64)
 (cx, cy) = (50,50)
 
 cosfire = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (1,1), rhoList=range(0,11,2), sigma0=2,  alpha=0.3,
-		rotationInvariance = np.arange(24)/12*np.pi, numthreads = 4, scaleInvariance=[1]
-	   ).fit(proto, (cx, cy))
+		c.CircleStrategy, c.DoGFilter, (1,1), prototype=proto, center=(cx,cy), rhoList=range(0,11,2), sigma0=2,  alpha=0.3,
+		rotationInvariance = np.arange(24)/12*np.pi, scaleInvariance=[1]
+	   ).fit()
 print(cosfire.strategy.tuples)
 
 result = c.rescaleImage(cosfire.transform(subject), 0, 255)
