@@ -1,50 +1,51 @@
-1 threads,2279ms
-1 threads,2287ms
-1 threads,2252ms
-1 threads,2254ms
-1 threads,2240ms
-1 threads,2260ms
-1 threads,2178ms
-1 threads,2211ms
-1 threads,2239ms
-1 threads,2276ms
-2 threads,1595ms
-2 threads,1691ms
-2 threads,1616ms
-2 threads,1593ms
-2 threads,1635ms
-2 threads,1650ms
-2 threads,1619ms
-2 threads,1636ms
-2 threads,1638ms
-2 threads,1631ms
-4 threads,1381ms
-4 threads,1374ms
-4 threads,1392ms
-4 threads,1415ms
-4 threads,1366ms
-4 threads,1379ms
-4 threads,1363ms
-4 threads,1385ms
-4 threads,1398ms
-4 threads,1343ms
-8 threads,1365ms
-8 threads,1372ms
-8 threads,1354ms
-8 threads,1394ms
-8 threads,1418ms
-8 threads,1383ms
-8 threads,1394ms
-8 threads,1379ms
-8 threads,1317ms
-8 threads,1395ms
-16 threads,1450ms
-16 threads,1461ms
-16 threads,1441ms
-16 threads,1472ms
-16 threads,1411ms
-16 threads,1459ms
-16 threads,1488ms
-16 threads,1470ms
-16 threads,1448ms
-16 threads,1486ms
+threads,ms
+1,2279
+1,2287
+1,2252
+1,2254
+1,2240
+1,2260
+1,2178
+1,2211
+1,2239
+1,2276
+2,1595
+2,1691
+2,1616
+2,1593
+2,1635
+2,1650
+2,1619
+2,1636
+2,1638
+2,1631
+4,1381
+4,1374
+4,1392
+4,1415
+4,1366
+4,1379
+4,1363
+4,1385
+4,1398
+4,1343
+8,1365
+8,1372
+8,1354
+8,1394
+8,1418
+8,1383
+8,1394
+8,1379
+8,1317
+8,1395
+16,1450
+16,1461
+16,1441
+16,1472
+16,1411
+16,1459
+16,1488
+16,1470
+16,1448
+16,1486
