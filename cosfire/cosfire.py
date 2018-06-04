@@ -82,7 +82,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Collect shifted filter responses
 		if self.numthreads > 1:
-			curResponses = sel.pool2.map(self.shiftResponse, curTuples)
+			curResponses = self.pool2.map(self.shiftResponse, curTuples)
 		else:
 			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
 
