@@ -18,9 +18,9 @@ timings = {}
 
 for i in range(numiterations):
     cosfire = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,20,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads
-	   ).fit(proto, (cx, cy))
+		c.CircleStrategy, c.DoGFilter, (2.4, 1), prototype=proto, center=(cx,cy), rhoList=range(0,20,2), sigma0=3,  alpha=0.7,
+		rotationInvariance = np.arange(24)/12*np.pi
+	   ).fit()
     cosfire.transform(subject)
     for t in cosfire.strategy.timings:
         if not(t[0][0] == '\t'):

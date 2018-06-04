@@ -50,16 +50,16 @@ print('[TEST 3] Subject the same:', compareMat(subject_image,subject))
 
 # Symmetrical filter
 cosfire_symm = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (2.4, 1), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(12)/12*np.pi, numthreads=numthreads
-	   ).fit(proto_symm, (cx, cy))
+		c.CircleStrategy, c.DoGFilter, (2.4, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
+		rotationInvariance = np.arange(12)/12*np.pi
+	   ).fit()
 result_symm = cosfire_symm.transform(subject)
 
 # Asymmetrical filter
 cosfire_asymm = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (1.8, 1), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
-		rotationInvariance = np.arange(24)/12*np.pi, numthreads=numthreads
-	   ).fit(proto_symm, (cx, cy))
+		c.CircleStrategy, c.DoGFilter, (1.8, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
+		rotationInvariance = np.arange(24)/12*np.pi
+	   ).fit()
 # Make asymmetrical
 asymmTuples = []
 for tupl in cosfire_asymm.strategy.tuples:
@@ -68,7 +68,7 @@ for tupl in cosfire_asymm.strategy.tuples:
 cosfire_asymm.strategy.tuples = asymmTuples
 result_asymm = cosfire_asymm.transform(subject)
 
-# filtered prototypes 
+# filtered prototypes
 #filtered_prototype_symm = c.rescaleImage(cosfire_symm.strategy.protoStack.stack[0].image, 0, 255).astype(np.uint8)
 #filtered_prototype_asymm = c.rescaleImage(cosfire_asymm.strategy.protoStack.stack[0].image, 0, 255).astype(np.uint8)
 
@@ -86,4 +86,4 @@ result = np.multiply(result, mask)
 result = c.rescaleImage(result, 0, 255)
 binaryResult = np.where(result > 37, 1, 0)
 print('[TEST 7] response the same:', compareMat(response_rescaled,result))
-print('[TEST 8] binnary the same:', compareMat(output_segmented,binaryResult))
+print('[TEST 8] binary the same:', compareMat(output_segmented,binaryResult))

@@ -1,7 +1,5 @@
 import cosfire as c
 import numpy as np
-import math as m
-from PIL import Image
 
 class ImageObject():
 
