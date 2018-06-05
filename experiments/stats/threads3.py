@@ -1,18 +1,18 @@
 #import matplotlib.pyplot as plt
 import numpy as np
 #import time
-from PIL import Image
 import cosfire as c
+import cv2
 
 # Prototype image
-proto = np.asarray(Image.open('line.png').convert('L'), dtype=np.float64)
-subject = 1 - np.asarray(Image.open('01_test.tif').convert('RGB'), dtype=np.float64)[:,:,1]
+proto = np.asarray(cv2.imread('line.png', cv2.IMREAD_GRAYSCALE), dtype=np.float64)
+subject = 1 - np.asarray(cv2.imread('01_test.tif'), dtype=np.float64)[:,:,1]
 (cx, cy) = (100,100)
 
 stats_threads = {}
 for maxRho in [4+1,8+1,12+1,16+1,20+1]:
     stats_rho = {}
-    for numthreads in 2**np.array([0,1,2,3]):
+    for numthreads in 2**np.array([0,1,2,3,4,5]):
         stats_rho[numthreads] = 0
         for i in range(5):
             stats_rho[numthreads] += 0
@@ -32,7 +32,7 @@ for maxRho in [4+1,8+1,12+1,16+1,20+1]:
 print("tuples,threads,ms")
 for rho in stats_threads:
     for threads in stats_threads[rho]:
-        print("{},{},{}",int(rho),int(threads),int(stats_threads[rho][threads]))
+        print("{},{},{}".format(int(rho),int(threads),int(stats_threads[rho][threads])))
 '''
 x = np.array([1,2,3])
 h = np.array([0.3,1,2])
