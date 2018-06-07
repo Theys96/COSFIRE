@@ -4,17 +4,24 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 proto = np.asarray(Image.open('edge.png').convert('L'), dtype=np.float64)
-subject = np.asarray(Image.open('rino.pgm').convert('L'), dtype=np.float64)
-(cx, cy) = (50,50)
+subject = np.asarray(Image.open('road.jpg').convert('L'), dtype=np.float64)
+(cx, cy) = (51,50)
 
+'''
 cosfire = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (1,1), prototype=proto, center=(cx,cy), rhoList=range(0,11,2), sigma0=2,  alpha=0.3,
+		c.CircleStrategy, c.DoGFilter, (2.4,[0,1]), prototype=proto, center=(cx,cy), rhoList=[0,2,4,6,8], sigma0=2.4,  alpha=0.1,
+		rotationInvariance = np.arange(24)/12*np.pi, scaleInvariance=[1]
+	   ).fit()
+'''
+cosfire = c.COSFIRE(
+		c.CircleStrategy, c.DoGFilter, (2.4,[0,1]), prototype=proto, center=(cx,cy), rhoList=range(0,11,2), sigma0=3,  alpha=0.4,
 		rotationInvariance = np.arange(24)/12*np.pi, scaleInvariance=[1]
 	   ).fit()
 print(cosfire.strategy.tuples)
 
 result = c.rescaleImage(cosfire.transform(subject), 0, 255)
-result = 1 - np.where(result > 10, 1, 0)
+result = np.where(result > 0.7*255, 0.7*255, result)
+result = c.rescaleImage(result, 0, 255)
 
 #plt.imshow(subject, cmap='gray')
 #plt.show()

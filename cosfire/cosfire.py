@@ -86,6 +86,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		else:
 			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
 
+		self.examples = curResponses
+
 		# Combine shifted filter responses
 		result = np.multiply.reduce(curResponses)
 		result = result**(1/len(curResponses))
