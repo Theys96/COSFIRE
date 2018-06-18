@@ -9,6 +9,7 @@ subject = np.asarray(Image.open('road.jpg').convert('L'), dtype=np.float64)
 
 '''
 cosfire = c.COSFIRE(
+<<<<<<< HEAD
 		c.CircleStrategy, c.DoGFilter, (2.4,[0,1]), prototype=proto, center=(cx,cy), rhoList=[0,2,4,6,8], sigma0=2.4,  alpha=0.1,
 		rotationInvariance = np.arange(24)/12*np.pi, scaleInvariance=[1]
 	   ).fit()
@@ -16,6 +17,10 @@ cosfire = c.COSFIRE(
 cosfire = c.COSFIRE(
 		c.CircleStrategy, c.DoGFilter, (2.4,[0,1]), prototype=proto, center=(cx,cy), rhoList=range(0,11,2), sigma0=3,  alpha=0.4,
 		rotationInvariance = np.arange(24)/12*np.pi, scaleInvariance=[1]
+=======
+		c.CircleStrategy("DoGFilter", (1,1), prototype=proto, center=(cx,cy), rhoList=range(0,11,2), sigma0=2,  alpha=0.3,
+		rotationInvariance = np.arange(24)/12*np.pi, scaleInvariance=[1])
+>>>>>>> e110ad8cdb9b23999853b15ec4f370a2ef50be53
 	   ).fit()
 print(cosfire.strategy.tuples)
 
