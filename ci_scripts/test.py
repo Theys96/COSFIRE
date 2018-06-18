@@ -21,7 +21,7 @@ class TestMethods(unittest.TestCase):
 
         # Create COSFIRE operator and fit it with the prototype, then apply it to a subject
         c.COSFIRE(
-                c.CircleStrategy, c.DoGFilter, ([1,2,3], 1), rhoList=[0,10,20,40], prototype=proto, center=(cx, cy)
+                c.CircleStrategy(c.DoGFilter, ([1,2,3], 1), rhoList=[0,10,20,40], prototype=proto, center=(cx, cy))
                ).fit().transform(subject)
 
 
