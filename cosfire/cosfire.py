@@ -13,8 +13,8 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 		self.strategy.fit(*pargs, **kwargs)
 		return self;
 
-	def transform(self, prototype, *pargs, **kwargs):
-		return self.strategy.transform(prototype, *pargs, **kwargs)
+	def transform(self, subject):
+		return self.strategy.transform(subject)
 
 	def get_params(self, deep=True):
 		return self.strategy.get_params(deep)
