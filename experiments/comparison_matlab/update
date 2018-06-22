@@ -1,0 +1,4 @@
+cd ../..
+sudo python3 setup.py install --user
+cd experiments/comparison_matlab
+

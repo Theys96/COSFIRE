@@ -53,18 +53,18 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def transform(self, subject):
 		t0 = time.time()                                         # Time point
 
-		# Precompute all blurred filter responses
-		self.responses = self.computeResponses(subject)
-
-		# Store timing
-		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
-
-		t1 = time.time()                                         # Time point
-
 		variations = []
 		for psi in self.rotationInvariance:
 			for upsilon in self.scaleInvariance:
 				variations.append( (psi, upsilon) )
+
+		# Precompute all blurred filter responses
+		self.computeTupleUnion(variations)
+		self.responses = self.computeResponses(subject)
+
+		# Store timing
+		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
+		t1 = time.time()                                         # Time point
 
 		# Store the maximum of all the orientations
 		if self.numthreads > 1:
@@ -75,6 +75,58 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# Store timing
 		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
 
+		t2 = time.time()                                         # Time point
+
+		if self.numthreads > 1:
+			result2 = self.pool.map(self.shiftResponse2, self.uniqueTuples)
+		else:
+			result2 = [self.shiftResponse2(tupl) for tupl in self.uniqueTuples]
+		self.shiftedResponses = {}
+		for x in result2:
+			self.shiftedResponses[x[0]] = x[1]
+
+		self.timings.append( ("\tShifting all responses", time.time()-t2) )
+		t3 = time.time()                                         # Time point
+
+		if self.numthreads > 1:
+			combined = self.pool.map(self.combineResponses, variations)
+		else:
+			combined = [self.combineResponses(variation) for variation in variations]
+
+		self.timings.append( ("\tCombining all responses", time.time()-t3) )
+
+		t4 = time.time()                                         # Time point
+		result = np.amax(combined, axis=0)
+
+		self.timings.append( ("\tOuter max", time.time()-t4) )
+		self.timings.append( ("Shifting and combining all responses 2", time.time()-t2) )
+		return result
+
+	def computeTupleUnion( self, variations ):
+		args = []
+		tuples = []
+		for variation in variations:
+			for tupl in self.tuples:
+				newArg = (tupl[0]*variation[1], *tupl[2:])
+				newTupl = (tupl[0]*variation[1], tupl[1]+variation[0], *tupl[2:])
+				if newTupl not in tuples:
+					tuples.append(newTupl)
+					if newArg not in args:
+						args.append(newArg)
+		self.uniqueTuples = tuples
+		self.uniqueArgs = args
+
+	def combineResponses( self, variation ):
+		psi = variation[0]
+		upsilon = variation[1]
+
+		# Adjust base tuples
+		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
+		curResponses = [self.shiftedResponses[tupl] for tupl in curTuples]
+
+		#Combine to result
+		result = np.multiply.reduce(curResponses)
+		result = result**(1/len(curResponses))
 		return result
 
 	def shiftCombine( self, variation ):
@@ -111,6 +163,9 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Apply shift
 		return c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
+
+	def shiftResponse2(self, tupl):
+		return (tupl, self.shiftResponse(tupl))
 
 	def findTuples(self):
 		# Init some variables
@@ -162,24 +217,24 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		t0 = time.time()                                 # Time point
 
-		uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
+		#uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
 		filteredResponses = {}
-		for args in uniqueArgs:
+		for args in c.unique([ tuple(args) for (rho,*args) in self.uniqueArgs]):
 			# First apply the chosen filter
 			filteredResponse = self.filt(*args).transform(subject)
 			# ReLU
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 			# Save response
-			filteredResponses[args] = filteredResponse
+			filteredResponses[tuple(args)] = filteredResponse
 
 		# Store timing
 		self.timings.append( ("\tApplying {} filter(s)".format(len(filteredResponses)), time.time()-t0) )
 		t1 = time.time()                                 # Time point
 
 		responses = {}
-		for tupl in self.tuples:
+		for tupl in self.uniqueArgs:
 			rho = tupl[0]
-			args = tupl[2:]
+			args = tupl[1:]
 
 			if self.alpha != 0:
 				for upsilon in self.scaleInvariance:
