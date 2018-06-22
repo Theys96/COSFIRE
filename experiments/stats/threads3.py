@@ -17,8 +17,8 @@ for maxRho in [4+1,8+1,12+1,16+1,20+1]:
         for i in range(5):
             stats_rho[numthreads] += 0
             cosfire = c.COSFIRE(
-        		c.CircleStrategy, c.DoGFilter, (2.4, 1), prototype=proto, center=(cx,cy), rhoList=range(0,maxRho,2), sigma0=3,  alpha=0.7,
-        		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads
+        		c.CircleStrategy(c.DoGFilter, (2.4, 1), prototype=proto, center=(cx,cy), rhoList=range(0,maxRho,2), sigma0=3,  alpha=0.7,
+        		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads)
         	   ).fit()
             cosfire.transform(subject)
             numTuples = len(cosfire.strategy.tuples)

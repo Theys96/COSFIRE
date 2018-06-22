@@ -10,19 +10,20 @@ subject = 1 - np.asarray(cv2.imread('01_test.tif'), dtype=np.float64)[:,:,1]
 
 stats_threads = []
 threads_numtuples = 0
+n = 10
 for numthreads in 2**np.array([0,1,2,3,4]):
-    for i in range(10):
+    for i in range(n):
         t0 = time.time()
         cosfire = c.COSFIRE(
-    		c.CircleStrategy, c.DoGFilter, (2.4, 1), prototype=proto, center=(cx,cy), rhoList=range(0,16,2), sigma0=3,  alpha=0.7,
-    		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads
+    		c.CircleStrategy(c.DoGFilter, (2.4, 1), prototype=proto, center=(cx,cy), rhoList=range(0,16,2), sigma0=3,  alpha=0.7,
+    		rotationInvariance = np.arange(24)/12*np.pi, numthreads = numthreads)
     	   ).fit()
         cosfire.transform(subject)
         threads_numtuples = len(cosfire.strategy.tuples)
         for timing in cosfire.strategy.timings:
             if timing[0][0]=='S':
                 stats_threads.append( (numthreads, 1000*timing[1]) )
-        #print("{}, {}/10".format(numthreads, i))
+        print("{}, {}/{}".format(numthreads, i, n))
 
 print("threads,ms")
 for stat in stats_threads:

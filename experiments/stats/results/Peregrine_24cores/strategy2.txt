@@ -1,0 +1,128 @@
+ --- TIME MEASUREMENTS: Sequential --- 
+   0.01ms		Finding tuples for rho=0
+   3.46ms		Finding tuples for rho=2
+   3.67ms		Finding tuples for rho=4
+   3.86ms		Finding tuples for rho=6
+   4.07ms		Finding tuples for rho=8
+   4.74ms		Finding tuples for rho=10
+   4.94ms		Finding tuples for rho=12
+   5.76ms		Finding tuples for rho=14
+  30.52ms	Finding all 15 tuples for 8 different values of rho
+  26.71ms		Applying 1 filter(s)
+  18.75ms		Computing 8 blurred filter response(s)
+  47.19ms	Precomputing 8 filtered+blurred responses
+  65.11ms		Shifting and combining the responses for psi=0.00 and upsilon=1
+  64.08ms		Shifting and combining the responses for psi=0.26 and upsilon=1
+  49.21ms		Shifting and combining the responses for psi=0.52 and upsilon=1
+  49.70ms		Shifting and combining the responses for psi=0.79 and upsilon=1
+  48.71ms		Shifting and combining the responses for psi=1.05 and upsilon=1
+  48.64ms		Shifting and combining the responses for psi=1.31 and upsilon=1
+  49.25ms		Shifting and combining the responses for psi=1.57 and upsilon=1
+  49.28ms		Shifting and combining the responses for psi=1.83 and upsilon=1
+  48.76ms		Shifting and combining the responses for psi=2.09 and upsilon=1
+  49.59ms		Shifting and combining the responses for psi=2.36 and upsilon=1
+  49.22ms		Shifting and combining the responses for psi=2.62 and upsilon=1
+  49.39ms		Shifting and combining the responses for psi=2.88 and upsilon=1
+  49.84ms		Shifting and combining the responses for psi=3.14 and upsilon=1
+  49.59ms		Shifting and combining the responses for psi=3.40 and upsilon=1
+  49.30ms		Shifting and combining the responses for psi=3.67 and upsilon=1
+  49.66ms		Shifting and combining the responses for psi=3.93 and upsilon=1
+  48.76ms		Shifting and combining the responses for psi=4.19 and upsilon=1
+  49.44ms		Shifting and combining the responses for psi=4.45 and upsilon=1
+  49.22ms		Shifting and combining the responses for psi=4.71 and upsilon=1
+  49.42ms		Shifting and combining the responses for psi=4.97 and upsilon=1
+  48.68ms		Shifting and combining the responses for psi=5.24 and upsilon=1
+  49.60ms		Shifting and combining the responses for psi=5.50 and upsilon=1
+  49.26ms		Shifting and combining the responses for psi=5.76 and upsilon=1
+  49.38ms		Shifting and combining the responses for psi=6.02 and upsilon=1
+1243.74ms	Shifting and combining all responses
+ 540.97ms		Shifting all 290 responses
+ 952.13ms		Combining all responses (#24)
+  31.62ms		Outer max
+1524.72ms	Shifting and combining all responses 2
+
+ --- TIME MEASUREMENTS: 8 thread(s) --- 
+   0.01ms		Finding tuples for rho=0
+   3.89ms		Finding tuples for rho=2
+   4.07ms		Finding tuples for rho=4
+   4.24ms		Finding tuples for rho=6
+   4.56ms		Finding tuples for rho=8
+   5.17ms		Finding tuples for rho=10
+   5.40ms		Finding tuples for rho=12
+   6.36ms		Finding tuples for rho=14
+  33.72ms	Finding all 15 tuples for 8 different values of rho
+  28.32ms		Applying 1 filter(s)
+  19.59ms		Computing 8 blurred filter response(s)
+  49.62ms	Precomputing 8 filtered+blurred responses
+ 191.51ms		Shifting and combining the responses for psi=0.00 and upsilon=1
+ 196.30ms		Shifting and combining the responses for psi=0.26 and upsilon=1
+ 197.61ms		Shifting and combining the responses for psi=0.52 and upsilon=1
+ 202.31ms		Shifting and combining the responses for psi=1.05 and upsilon=1
+ 202.43ms		Shifting and combining the responses for psi=1.83 and upsilon=1
+ 207.51ms		Shifting and combining the responses for psi=0.79 and upsilon=1
+ 213.13ms		Shifting and combining the responses for psi=1.31 and upsilon=1
+ 214.23ms		Shifting and combining the responses for psi=1.57 and upsilon=1
+ 143.37ms		Shifting and combining the responses for psi=2.88 and upsilon=1
+ 142.24ms		Shifting and combining the responses for psi=3.40 and upsilon=1
+ 155.23ms		Shifting and combining the responses for psi=2.36 and upsilon=1
+ 163.77ms		Shifting and combining the responses for psi=2.62 and upsilon=1
+ 173.22ms		Shifting and combining the responses for psi=2.09 and upsilon=1
+ 162.88ms		Shifting and combining the responses for psi=3.14 and upsilon=1
+ 159.54ms		Shifting and combining the responses for psi=3.67 and upsilon=1
+ 164.68ms		Shifting and combining the responses for psi=3.93 and upsilon=1
+ 147.55ms		Shifting and combining the responses for psi=4.19 and upsilon=1
+ 136.73ms		Shifting and combining the responses for psi=4.97 and upsilon=1
+ 134.64ms		Shifting and combining the responses for psi=5.24 and upsilon=1
+ 128.96ms		Shifting and combining the responses for psi=5.76 and upsilon=1
+ 140.39ms		Shifting and combining the responses for psi=5.50 and upsilon=1
+ 156.51ms		Shifting and combining the responses for psi=4.71 and upsilon=1
+ 159.11ms		Shifting and combining the responses for psi=4.45 and upsilon=1
+ 143.37ms		Shifting and combining the responses for psi=6.02 and upsilon=1
+ 576.83ms	Shifting and combining all responses
+ 238.65ms		Shifting all 290 responses
+ 174.57ms		Combining all responses (#24)
+  40.19ms		Outer max
+ 453.42ms	Shifting and combining all responses 2
+
+ --- TIME MEASUREMENTS: 24 thread(s) --- 
+   0.01ms		Finding tuples for rho=0
+   5.43ms		Finding tuples for rho=2
+   5.54ms		Finding tuples for rho=4
+   5.86ms		Finding tuples for rho=6
+   6.02ms		Finding tuples for rho=8
+   5.40ms		Finding tuples for rho=10
+   5.41ms		Finding tuples for rho=12
+   6.23ms		Finding tuples for rho=14
+  39.91ms	Finding all 15 tuples for 8 different values of rho
+  27.13ms		Applying 1 filter(s)
+  17.50ms		Computing 8 blurred filter response(s)
+  46.33ms	Precomputing 8 filtered+blurred responses
+ 224.29ms		Shifting and combining the responses for psi=0.52 and upsilon=1
+ 230.72ms		Shifting and combining the responses for psi=0.00 and upsilon=1
+ 248.57ms		Shifting and combining the responses for psi=0.79 and upsilon=1
+ 257.08ms		Shifting and combining the responses for psi=0.26 and upsilon=1
+ 274.44ms		Shifting and combining the responses for psi=1.05 and upsilon=1
+ 316.18ms		Shifting and combining the responses for psi=2.09 and upsilon=1
+ 319.58ms		Shifting and combining the responses for psi=1.83 and upsilon=1
+ 321.58ms		Shifting and combining the responses for psi=1.31 and upsilon=1
+ 321.31ms		Shifting and combining the responses for psi=2.36 and upsilon=1
+ 322.85ms		Shifting and combining the responses for psi=1.57 and upsilon=1
+ 355.90ms		Shifting and combining the responses for psi=2.62 and upsilon=1
+ 358.83ms		Shifting and combining the responses for psi=3.14 and upsilon=1
+ 372.53ms		Shifting and combining the responses for psi=2.88 and upsilon=1
+ 376.21ms		Shifting and combining the responses for psi=3.67 and upsilon=1
+ 402.83ms		Shifting and combining the responses for psi=3.40 and upsilon=1
+ 405.53ms		Shifting and combining the responses for psi=4.45 and upsilon=1
+ 410.92ms		Shifting and combining the responses for psi=4.19 and upsilon=1
+ 410.69ms		Shifting and combining the responses for psi=4.97 and upsilon=1
+ 410.87ms		Shifting and combining the responses for psi=4.71 and upsilon=1
+ 411.47ms		Shifting and combining the responses for psi=5.24 and upsilon=1
+ 414.35ms		Shifting and combining the responses for psi=3.93 and upsilon=1
+ 413.76ms		Shifting and combining the responses for psi=5.50 and upsilon=1
+ 415.72ms		Shifting and combining the responses for psi=6.02 and upsilon=1
+ 415.86ms		Shifting and combining the responses for psi=5.76 and upsilon=1
+ 473.21ms	Shifting and combining all responses
+ 260.99ms		Shifting all 290 responses
+ 107.91ms		Combining all responses (#24)
+  34.54ms		Outer max
+ 403.45ms	Shifting and combining all responses 2

@@ -3,9 +3,7 @@ import cosfire as c
 import math as m
 import numpy as np
 import time
-import os
-#from multiprocessing.dummy import Pool
-from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing.dummy import Pool
 import multiprocessing as mp
 
 class COSFIRE(BaseEstimator, TransformerMixin):
@@ -45,6 +43,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.numthreads = numthreads
 		if numthreads > 1:
 			self.pool = Pool(numthreads)
+			self.pool2 = Pool(mp.cpu_count())
 
 	def fit(self):
 		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
@@ -67,31 +66,40 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
 		t1 = time.time()                                         # Time point
 
-		# Performing all shift operations
+		# Store the maximum of all the orientations
 		if self.numthreads > 1:
-			#result2 = self.pool.map(self.shiftResponse2, self.uniqueTuples)
-			shift = np.concatenate([chunk for chunk in self.pool.imap_unordered(self.shiftResponse2, np.array_split(self.uniqueTuples, self.numthreads))])
+			result = np.amax(self.pool.map(self.shiftCombine, variations), axis=0)
 		else:
-			shift = self.shiftResponse2(self.uniqueTuples)
-
-		# Restructuring into a dictionary
-		self.shiftedResponses = {}
-		for x in shift:
-			self.shiftedResponses[tuple(x[0])] = x[1]
+			result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
 
 		# Store timing
-		self.timings.append( ("\tShifting all {} responses".format(len(self.uniqueTuples)), time.time()-t1) )
+		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
+
 		t2 = time.time()                                         # Time point
 
-		# Combine filter responses and take max
 		if self.numthreads > 1:
-			result = np.amax(self.pool.map(self.combineResponses, variations), axis=0)
+			result2 = self.pool.map(self.shiftResponse2, self.uniqueTuples)
 		else:
-			result = np.amax([self.combineResponses(variation) for variation in variations], axis=0)
+			result2 = [self.shiftResponse2(tupl) for tupl in self.uniqueTuples]
+		self.shiftedResponses = {}
+		for x in result2:
+			self.shiftedResponses[x[0]] = x[1]
 
-		# Store timig
-		self.timings.append( ("\tCombining all responses (#{})".format(len(variations)), time.time()-t2) )
-		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
+		self.timings.append( ("\tShifting all responses", time.time()-t2) )
+		t3 = time.time()                                         # Time point
+
+		if self.numthreads > 1:
+			combined = self.pool.map(self.combineResponses, variations)
+		else:
+			combined = [self.combineResponses(variation) for variation in variations]
+
+		self.timings.append( ("\tCombining all responses", time.time()-t3) )
+
+		t4 = time.time()                                         # Time point
+		result = np.amax(combined, axis=0)
+
+		self.timings.append( ("\tOuter max", time.time()-t4) )
+		self.timings.append( ("Shifting and combining all responses 2", time.time()-t2) )
 		return result
 
 	def computeTupleUnion( self, variations ):
@@ -121,22 +129,43 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		result = result**(1/len(curResponses))
 		return result
 
+	def shiftCombine( self, variation ):
+		psi = variation[0]
+		upsilon = variation[1]
+		t0 = time.time()                                 # Time point
+
+		# Adjust base tuples
+		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
+
+		# Collect shifted filter responses
+		if self.numthreads > 1:
+			curResponses = self.pool2.map(self.shiftResponse, curTuples)
+		else:
+			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
+
+		self.examples = curResponses
+
+		# Combine shifted filter responses
+		result = np.multiply.reduce(curResponses)
+		result = result**(1/len(curResponses))
+
+		# Store timing
+		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
+
+		return result
+
 	def shiftResponse(self, tupl):
 		rho = tupl[0]
 		phi = tupl[1]
-		args = tuple(tupl[2:])
+		args = tupl[2:]
 		dx = int(round(rho*np.cos(phi)))
 		dy = int(round(-rho*np.sin(phi)))
 
 		# Apply shift
 		return c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
 
-	def shiftResponse2(self, tuples):
-		t0 = time.time()                                 # Time point
-		result = [(tupl, self.shiftResponse(tupl)) for tupl in tuples]
-		t1 = time.time()
-		self.timings.append( ("\t\tShifting {} responses".format(len(tuples)), t1-t0) )
-		return result
+	def shiftResponse2(self, tupl):
+		return (tupl, self.shiftResponse(tupl))
 
 	def findTuples(self):
 		# Init some variables
