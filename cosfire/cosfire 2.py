@@ -6,7 +6,7 @@ import time
 import os
 #from multiprocessing.dummy import Pool
 from multiprocessing.pool import ThreadPool as Pool
-#import multiprocessing as mp
+import multiprocessing as mp
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -42,7 +42,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
-		self.tupleTimings = []
 		self.numthreads = numthreads
 		if numthreads > 1:
 			self.pool = Pool(numthreads)
@@ -69,11 +68,13 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		t1 = time.time()                                         # Time point
 
 		# Performing all shift operations
-		self.tupleEpoch = time.time()
 		if self.numthreads > 1:
-			shift = [chunk for chunk in self.pool.imap_unordered(self.shiftResponse, self.uniqueTuples, int( len(self.uniqueTuples)/self.numthreads) )]
+			#result2 = self.pool.map(self.shiftResponse2, self.uniqueTuples)
+			shift = [chunk for chunk in self.pool.imap_unordered(self.shiftResponse2, self.uniqueTuples, self.numthreads)]
+			#shift = np.concatenate([chunk for chunk in self.pool.imap_unordered(self.shiftResponse2, np.array_split(self.uniqueTuples, self.numthreads))])
 		else:
-			shift = [self.shiftResponse(tupl) for tupl in self.uniqueTuples]
+			shift = [self.shiftResponse2(chunk) for chunk in self.uniqueTuples]
+			#shift = self.shiftResponse2(self.uniqueTuples)
 
 		# Restructuring into a dictionary
 		self.shiftedResponses = {}
@@ -121,8 +122,19 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		result = np.multiply.reduce(curResponses)
 		result = result**(1/len(curResponses))
 		return result
-	
+
 	def shiftResponse(self, tupl):
+		rho = tupl[0]
+		phi = tupl[1]
+		args = tuple(tupl[2:])
+		dx = int(round(rho*np.cos(phi)))
+		dy = int(round(-rho*np.sin(phi)))
+
+		# Apply shift
+		return c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
+
+	
+	def shiftResponse2(self, tupl):
 
 		rho = tupl[0]
 		phi = tupl[1]
@@ -132,6 +144,28 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Apply shift
 		return (tupl,c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0))
+
+	'''
+	def shiftResponse2(self, tuples):
+
+		result = []
+		#curResponse = np.array()
+		curIndex = tuple()
+		for tupl in tuples:
+			rho = tupl[0]
+			phi = tupl[1]
+			args = tuple(tupl[2:])
+			dx = int(round(rho*np.cos(phi)))
+			dy = int(round(-rho*np.sin(phi)))
+
+			# Apply shift
+			if ((rho,)+args != curIndex):
+				curIndex = (rho,)+args
+				curResponse = np.copy(self.responses[curIndex])
+			result.append( (tupl,c.shiftImage(curResponse, -dx, -dy).clip(min=0)) )
+		
+		return result
+	'''
 
 	def findTuples(self):
 		# Init some variables
