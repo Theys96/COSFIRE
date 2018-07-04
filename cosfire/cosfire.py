@@ -174,9 +174,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			if self.alpha != 0:
 				for upsilon in self.scaleInvariance:
 					localRho = rho * upsilon
-					localSigma = self.sigma0 + localRho*self.alpha
-					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6))+(1-int(round(localSigma*6))%2)).transform(filteredResponses[args])
-					responses[(localRho,)+args] = blurredResponse
+					if (localRho,)+args not in responses:
+						localSigma = self.sigma0 + localRho*self.alpha
+						blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6))+(1-int(round(localSigma*6))%2)).transform(filteredResponses[args])
+						responses[(localRho,)+args] = blurredResponse
 			else:
 				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponses[args])
 				for upsilon in self.scaleInvariance:
