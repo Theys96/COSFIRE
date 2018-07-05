@@ -34,7 +34,7 @@ class CLAHE(FunctionFilter):
 
 # Executes a 2D convolution by using a 1D kernel twice
 def _sepFilter2D(image, kernel):
-    return cv2.sepFilter2D(image, -1, kernel, kernel)
+    return cv2.sepFilter2D(image, -1, kernel, kernel, borderType=0)
 
 # Executes a 2D convolution by using a 2D kernel
 def _Filter2D(image, kernel):
