@@ -3,6 +3,11 @@ import cosfire as c
 import math as m
 import numpy as np
 import time
+#from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing import Pool
+import multiprocessing as mp
+
+print("PARALLEL X")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -25,7 +30,7 @@ class COSFIRE(BaseEstimator, TransformerMixin):
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
 
-	def __init__(self, filt, filterArgs, rhoList, prototype, center, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0.2):
+	def __init__(self, filt, filterArgs, rhoList, prototype, center, sigma0=0, alpha=0, rotationInvariance=[0], scaleInvariance=[1], T1=0, T2=0, numthreads=1):
 		self.filterArgs = self.convertFilterArgs(filterArgs) if type(filterArgs) is dict else filterArgs
 		self.filt = filt
 		self.T1 = T1
@@ -38,6 +43,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
+		self.numthreads = numthreads
 
 	def fit(self):
 		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
@@ -46,61 +52,68 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def transform(self, subject):
 		t0 = time.time()                                         # Time point
+		
+		(h,w) = subject.shape
+		m = self.maxRho()
+		self.pool = Pool(2)
+		task1 = self.pool.apply_async(apply, (subject[:int(h/2)+m,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+		task2 = self.pool.apply_async(apply, (subject[int(h/2)-m:,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+		result1 = task1.get()
+		result2 = task2.get()
+		result = np.concatenate( (result1[:int(h/2),:], result2[m:,:]), axis=0 )
+		self.pool.close()
 
-		# Precompute all blurred filter responses
-		self.responses = self.computeResponses(subject)
+		'''
+		(h,w) = subject.shape
+		m = self.maxRho()
+		self.pool = Pool(2)
+		task1 = self.pool.apply_async(apply, (subject[:1*int(h/4)+m,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+		task2 = self.pool.apply_async(apply, (subject[1*int(h/4)-m:2*int(h/4)+m,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+		task3 = self.pool.apply_async(apply, (subject[2*int(h/4)-m:3*int(h/4)+m,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+		task4 = self.pool.apply_async(apply, (subject[4*int(h/4)-m:,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+		result1 = task1.get()
+		result2 = task2.get()
+		result3 = task3.get()
+		result4 = task4.get()
+		result = np.concatenate( (result1[:int(h/4),:], result2[m:int(h/4)+m,:], result3[m:int(h/4)+m,:], result4[m:,:]), axis=0 )
+		self.pool.close()
+		'''
 
-		# Store timing
-		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
-
-		t1 = time.time()                                         # Time point
-
-		variations = []
-		for psi in self.rotationInvariance:
-			for upsilon in self.scaleInvariance:
-				variations.append( (psi, upsilon) )
-
-		# Store the maximum of all the orientations
-		result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
-
-		# Store timing
-		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
-
-		return result
-
-	def shiftCombine( self, variation ):
-		psi = variation[0]
-		upsilon = variation[1]
-		t0 = time.time()                                 # Time point
-
-		# Adjust base tuples
-		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
-
-		# Collect shifted filter responses
-		curResponses = []
-		for tupl in curTuples:
-			rho = tupl[0]
-			phi = tupl[1]
-			args = tupl[2:]
-			dx = int(round(rho*np.cos(phi)))
-			dy = int(round(-rho*np.sin(phi)))
-
-			# Apply shift
-			response = c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
-
-			# Add to set of responses
-			#curResponses.append( (response, rho) )    # For weighted geometric mean
-			curResponses.append( response )
-
-		# Combine shifted filter responses
-		# curResult = self.weightedGeometricMean(curResponses)
-		result = np.multiply.reduce(curResponses)
-		result = result**(1/len(curResponses))
-
-		# Store timing
-		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
+		#result = apply(subject, self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance)
+		self.timings.append( ("\tTransform routines", time.time()-t0) )
 
 		return result
+
+	def divideAndCompute(self, subject, level):
+		(h,w) = subject.shape
+		m = self.maxRho()
+		orientation = h >= w
+		if (orientation):
+			chunk1 = subject[:int(h/2)+m,:]
+			chunk2 = subject[int(h/2)-m:,:]
+		else:
+			chunk1 = subject[:,:int(w/2)+m]
+			chunk2 = subject[:,int(w/2)-m:]
+		if (level > 0):
+			t0 = time.time()
+			if (orientation):
+				result = np.concatenate( (self.divideAndCompute(chunk1, level-1)[:int(h/2),:], self.divideAndCompute(chunk2, level-1)[m:,:]), axis=0 )
+			else:
+				result = np.concatenate( (self.divideAndCompute(chunk1, level-1)[:,:int(w/2)], self.divideAndCompute(chunk2, level-1)[:,m:]), axis=1 )
+			self.timings.append( ("\t\tLevel {} recursion of image partitioning".format(level), time.time()-t0) )
+			return result
+		else:
+			t0 = time.time()
+			task1 = self.pool.apply_async(apply, (chunk1, self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+			task2 = self.pool.apply_async(apply, (chunk2, self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
+			result1 = task1.get()
+			result2 = task2.get()
+			if (orientation):
+				result = np.concatenate( (result1[:int(h/2),:], result2[m:,:]), axis=0 )
+			else:
+				result = np.concatenate( (result1[:,:int(w/2)], result2[:,m:]), axis=1 )
+			self.timings.append( ("\t\tComputing 2 chunks of the partitioned image", time.time()-t0) )
+			return result
 
 	def findTuples(self):
 		# Init some variables
@@ -144,49 +157,8 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		return tuples
 
-	def computeResponses(self, subject):
-		# Response steps:
-		#  - apply the filter
-		#  - trim off values < T1
-		#  - apply blurring
-
-		t0 = time.time()                                 # Time point
-
-		uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
-		filteredResponses = {}
-		for args in uniqueArgs:
-			# First apply the chosen filter
-			filteredResponse = self.filt(*args).transform(subject)
-			# ReLU
-			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
-			# Save response
-			filteredResponses[args] = filteredResponse
-
-		# Store timing
-		self.timings.append( ("\tApplying {} filter(s)".format(len(filteredResponses)), time.time()-t0) )
-		t1 = time.time()                                 # Time point
-
-		responses = {}
-		for tupl in self.tuples:
-			rho = tupl[0]
-			args = tupl[2:]
-
-			if self.alpha != 0:
-				for upsilon in self.scaleInvariance:
-					localRho = rho * upsilon
-					localSigma = self.sigma0 + localRho*self.alpha
-					blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6))+(1-int(round(localSigma*6))%2)).transform(filteredResponses[args])
-					responses[(localRho,)+args] = blurredResponse
-			else:
-				blurredResponse = c.GaussianFilter(self.sigma0).transform(filteredResponses[args])
-				for upsilon in self.scaleInvariance:
-					localRho = rho * upsilon
-					responses[(localRho,)+args] = blurredResponse
-
-		# Store timing
-		self.timings.append( ("\tComputing {} blurred filter response(s)".format(len(responses)), time.time()-t1) )
-
-		return responses
+	def maxRho(self):
+		return int(np.amax(np.array(self.tuples)[:,0]))+2
 
 	# Function to compute the weighted geometric mean
 	# of a list of responses
@@ -206,3 +178,75 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		if len(dict) == 5:
 			return (dict['sigma'], dict['theta'], dict['lambd'], dict['gamma'], dict['psi'])
 		return dict.items()
+
+def computeResponses(subject, tuples, filt, sigma0, alpha, scaleInvariance):
+
+	uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in tuples])
+	filteredResponses = {}
+	for args in uniqueArgs:
+		# First apply the chosen filter
+		filteredResponse = filt(*args).transform(subject)
+		# ReLU
+		filteredResponse = np.where(filteredResponse < 0, 0, filteredResponse)
+		# Save response
+		filteredResponses[args] = filteredResponse
+
+	responses = {}
+	for tupl in tuples:
+		rho = tupl[0]
+		args = tupl[2:]
+
+		if alpha != 0:
+			for upsilon in scaleInvariance:
+				localRho = rho * upsilon
+				localSigma = sigma0 + localRho*alpha
+				blurredResponse = c.GaussianFilter(localSigma, sz=int(round(localSigma*6))+(1-int(round(localSigma*6))%2)).transform(filteredResponses[args])
+				responses[(localRho,)+args] = blurredResponse
+		else:
+			blurredResponse = c.GaussianFilter(sigma0).transform(filteredResponses[args])
+			for upsilon in scaleInvariance:
+				localRho = rho * upsilon
+				responses[(localRho,)+args] = blurredResponse
+
+	return responses
+
+def shiftCombine( variation, tuples, shape, responses ):
+	psi = variation[0]
+	upsilon = variation[1]
+
+	# Adjust base tuples
+	curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in tuples]
+
+	# Collect shifted filter responses
+	result = np.ones(shape)
+	for tupl in curTuples:
+		t1 = time.time()                                 # Time point
+		rho = tupl[0]
+		phi = tupl[1]
+		args = tupl[2:]
+		dx = int(round(rho*np.cos(phi)))
+		dy = int(round(-rho*np.sin(phi)))
+
+		# Apply shift
+		result = result * c.shiftImage(responses[(rho,)+args], -dx, -dy).clip(min=0)
+
+	# Combine shifted filter responses
+	# curResult = self.weightedGeometricMean(curResponses)
+	result = result**(1/len(curTuples))
+
+	return result
+
+def apply(subject, tuples, filt, sigma0, alpha, rotationInvariance, scaleInvariance):
+
+	# Precompute all blurred filter responses
+	responses = computeResponses(subject, tuples, filt, sigma0, alpha, scaleInvariance)
+
+	variations = []
+	for psi in rotationInvariance:
+		for upsilon in scaleInvariance:
+			variations.append( (psi, upsilon) )
+
+	# Store the maximum of all the orientations
+	result = np.amax([shiftCombine( variation, tuples, subject.shape, responses ) for variation in variations], axis=0)
+
+	return result

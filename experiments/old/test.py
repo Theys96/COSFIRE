@@ -24,8 +24,8 @@ global_timings.append( ("Loading in the prototype(.png), mask(.png) and input(.c
 # Symmetrical filter
 t1 = time.time()                  # Time point
 cosfire_symm = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (2.4, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
-		rotationInvariance = np.arange(12)/12*np.pi
+		c.CircleStrategy(c.DoGFilter, (2.4, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,9,2), sigma0=3,  alpha=0.7,
+		rotationInvariance = np.arange(12)/12*np.pi)
 	   ).fit()
 
 # Store timing
@@ -40,8 +40,8 @@ global_timings.append( ("Transforming the subject with the symmetrical filter", 
 # Asymmetrical filter
 t3 = time.time()                  # Time point
 cosfire_asymm = c.COSFIRE(
-		c.CircleStrategy, c.DoGFilter, (1.8, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
-		rotationInvariance = np.arange(24)/12*np.pi
+		c.CircleStrategy(c.DoGFilter, (1.8, 1), prototype=proto_symm, center=(cx,cy), rhoList=range(0,23,2), sigma0=2,  alpha=0.1,
+		rotationInvariance = np.arange(24)/12*np.pi)
 	   ).fit()
 # Make asymmetrical
 asymmTuples = []
