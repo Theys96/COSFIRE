@@ -52,10 +52,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 	def transform(self, subject):
 		t0 = time.time()                                         # Time point
-		
+
 		(h,w) = subject.shape
 		m = self.maxRho()
-		self.pool = Pool(2)
+		self.pool = Pool(self.numthreads)
 		task1 = self.pool.apply_async(apply, (subject[:int(h/2)+m,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
 		task2 = self.pool.apply_async(apply, (subject[int(h/2)-m:,:], self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance) )
 		result1 = task1.get()
@@ -80,7 +80,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		'''
 
 		#result = apply(subject, self.tuples, self.filt, self.sigma0, self.alpha, self.rotationInvariance, self.scaleInvariance)
-		self.timings.append( ("\tTransform routines", time.time()-t0) )
+		self.timings.append( ("Transform routine", time.time()-t0) )
 
 		return result
 
