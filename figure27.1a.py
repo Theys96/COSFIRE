@@ -1,6 +1,4 @@
 import variationUtil
-import sys
-n = 5
 
 '''  --- Variation 5 --- '''
 variationUtil.setVariation('5')
@@ -8,13 +6,13 @@ import cosfire as c
 import numpy as np
 import time
 import cv2
-import multiprocessing
 
 # Prototype image
 proto = np.asarray(cv2.imread('ci_scripts/line.png', cv2.IMREAD_GRAYSCALE), dtype=np.float64)
 subject = 1 - np.asarray(cv2.imread('ci_scripts/01_test.tif'), dtype=np.float64)[:,:,1]
 (cx, cy) = (100,100)
 
+n = 5
 stats_threads5 = []
 for numthreads in 2**np.array([0,1,2,3,4]):
     for i in range(n):

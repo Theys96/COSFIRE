@@ -1,7 +1,7 @@
 import variationUtil
 
 '''  --- Variation 5 --- '''
-variationUtil.setVariation('6')
+variationUtil.setVariation('5')
 import cosfire as c
 import numpy as np
 import time
@@ -13,7 +13,7 @@ subject = 1 - np.asarray(cv2.imread('ci_scripts/01_test.tif'), dtype=np.float64)
 (cx, cy) = (100,100)
 
 n = 5
-stats_threads6 = []
+stats_threads5 = []
 for numthreads in 2**np.array([0,1,2,3,4]):
     for i in range(n):
         t0 = time.time()
@@ -24,13 +24,13 @@ for numthreads in 2**np.array([0,1,2,3,4]):
         cosfire.transform(subject)
         for timing in cosfire.strategy.timings:
             if timing[0][0]=='S':
-                stats_threads6.append( (numthreads, 1000*timing[1]) )
+                stats_threads5.append( (numthreads, 1000*timing[1]) )
         print("{}, {}/{}".format(numthreads, i, n))
 
-fh = open('figure27.1b.csv', 'w')
+fh = open('figure28.1c.csv', 'w')
 print("threads,ms")
 fh.write("threads,ms\n")
-for stat in stats_threads6:
+for stat in stats_threads5:
     print("{},{}".format(int(stat[0]), int(stat[1])))
     fh.write("{},{}\n".format(int(stat[0]), int(stat[1])))
-fh.close()
+fh.close
