@@ -6,7 +6,7 @@ import time
 from multiprocessing.dummy import Pool
 import multiprocessing as mp
 
-print("COSFIRE variation 2")
+print("COSFIRE variation 5")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -46,6 +46,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.numthreads = numthreads
 		if numthreads > 1:
 			self.pool = Pool(numthreads)
+			self.pool2 = Pool(mp.cpu_count())
 
 	def fit(self):
 		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
@@ -69,7 +70,10 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 				variations.append( (psi, upsilon) )
 
 		# Store the maximum of all the orientations
-		result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
+		if self.numthreads > 1:
+			result = np.amax(self.pool.map(self.shiftCombine, variations), axis=0)
+		else:
+			result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
 
 		# Store timing
 		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
@@ -86,7 +90,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		# Collect shifted filter responses
 		if self.numthreads > 1:
-			curResponses = self.pool.map(self.shiftResponse, curTuples)
+			curResponses = self.pool2.map(self.shiftResponse, curTuples)
 		else:
 			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
 
