@@ -6,6 +6,8 @@ import time
 from multiprocessing.dummy import Pool
 import multiprocessing as mp
 
+print("COSFIRE variation 5")
+
 class COSFIRE(BaseEstimator, TransformerMixin):
 
 	def __init__(self, strategy, *pargs, **kwargs):

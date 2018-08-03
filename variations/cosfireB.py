@@ -8,7 +8,7 @@ import os
 from multiprocessing.pool import ThreadPool as Pool
 #import multiprocessing as mp
 
-print("PARALLEL B")
+print("COSFIRE strategy B")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 

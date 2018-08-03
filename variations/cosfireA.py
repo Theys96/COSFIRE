@@ -6,7 +6,7 @@ import time
 from multiprocessing.pool import ThreadPool as Pool
 import multiprocessing as mp
 
-print("PARALLEL A")
+print("COSFIRE strategy A")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 

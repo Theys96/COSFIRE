@@ -8,6 +8,8 @@ import os
 from multiprocessing.pool import ThreadPool as Pool
 import multiprocessing as mp
 
+print("COSFIRE variation 6")
+
 class COSFIRE(BaseEstimator, TransformerMixin):
 
 	def __init__(self, strategy):
