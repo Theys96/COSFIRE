@@ -11,7 +11,7 @@ subject = 1 - np.asarray(cv2.imread('01_test.tif'), dtype=np.float64)[:,:,1]
 stats_threads = []
 threads_numtuples = 0
 n = 10
-for numthreads in 2**np.array([0,1,2,3,4]):
+for numthreads in 2**np.array([0,1,2,3]):
     for i in range(n):
         t0 = time.time()
         cosfire = c.COSFIRE(
@@ -29,7 +29,7 @@ print("threads,ms")
 for stat in stats_threads:
     print("{},{}".format(int(stat[0]), int(stat[1])))
 
-'''  --- Plotting --- 
+'''  --- Plotting ---
 import matplotlib.pyplot as plt
 stats_threads = np.array(stats_threads)
 

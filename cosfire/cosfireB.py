@@ -3,10 +3,12 @@ import cosfire as c
 import math as m
 import numpy as np
 import time
+import os
+#from multiprocessing.dummy import Pool
 from multiprocessing.pool import ThreadPool as Pool
-import multiprocessing as mp
+#import multiprocessing as mp
 
-print("PARALLEL A")
+print("PARALLEL B")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
@@ -42,6 +44,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.rotationInvariance = rotationInvariance
 		self.scaleInvariance = scaleInvariance
 		self.timings = []
+		self.tupleTimings = []
 		self.numthreads = numthreads
 		if numthreads > 1:
 			self.pool = Pool(numthreads)
@@ -54,62 +57,83 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 	def transform(self, subject):
 		t0 = time.time()                                         # Time point
 
-		# Precompute all blurred filter responses
-		self.subject = subject
-		self.responses = self.computeResponses(subject)
-
-		# Store timing
-		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
-
-		t1 = time.time()                                         # Time point
-
 		variations = []
 		for psi in self.rotationInvariance:
 			for upsilon in self.scaleInvariance:
 				variations.append( (psi, upsilon) )
 
-
-
-		# Store the maximum of all the orientations
-		if self.numthreads > 1:
-			shift = [chunk for chunk in self.pool.imap_unordered(self.shiftCombine, variations)]
-		else:
-			shift = [self.shiftCombine(tupl) for tupl in variations]
-		result = np.amax(shift, axis=0)
+		# Precompute all blurred filter responses
+		self.computeTupleUnion(variations)
+		self.responses = self.computeResponses(subject)
 
 		# Store timing
-		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
+		self.timings.append( ("Precomputing {} filtered+blurred responses".format(len(self.responses)), time.time()-t0) )
+		t1 = time.time()                                         # Time point
 
+		# Performing all shift operations
+		self.tupleEpoch = time.time()
+		if self.numthreads > 1:
+			shift = [chunk for chunk in self.pool.imap_unordered(self.shiftResponse, self.uniqueTuples, int( len(self.uniqueTuples)/self.numthreads) )]
+		else:
+			shift = [self.shiftResponse(tupl) for tupl in self.uniqueTuples]
+
+		# Restructuring into a dictionary
+		self.shiftedResponses = {}
+		for x in shift:
+			self.shiftedResponses[tuple(x[0])] = x[1]
+
+		# Store timing
+		self.timings.append( ("\tShifting all {} responses".format(len(self.uniqueTuples)), time.time()-t1) )
+		t2 = time.time()                                         # Time point
+
+		# Combine filter responses and take max
+		if self.numthreads > 1:
+			result = np.amax(self.pool.map(self.combineResponses, variations), axis=0)
+		else:
+			result = np.amax([self.combineResponses(variation) for variation in variations], axis=0)
+
+		# Store timig
+		self.timings.append( ("\tCombining all responses (#{})".format(len(variations)), time.time()-t2) )
+		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
 		return result
 
-	def shiftCombine( self, variation ):
+	def computeTupleUnion( self, variations ):
+		args = []
+		tuples = []
+		for variation in variations:
+			for tupl in self.tuples:
+				newArg = (tupl[0]*variation[1], *tupl[2:])
+				newTupl = (tupl[0]*variation[1], tupl[1]+variation[0], *tupl[2:])
+				if newTupl not in tuples:
+					tuples.append(newTupl)
+					if newArg not in args:
+						args.append(newArg)
+		self.uniqueTuples = tuples
+		self.uniqueArgs = args
+
+	def combineResponses( self, variation ):
 		psi = variation[0]
 		upsilon = variation[1]
-		t0 = time.time()                                 # Time point
 
 		# Adjust base tuples
 		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
+		curResponses = [self.shiftedResponses[tupl] for tupl in curTuples]
 
-		# Collect shifted filter responses
-		result = np.ones(self.subject.shape)
-		for tupl in curTuples:
-			rho = tupl[0]
-			phi = tupl[1]
-			args = tupl[2:]
-			dx = int(round(rho*np.cos(phi)))
-			dy = int(round(-rho*np.sin(phi)))
-
-			# Apply shift
-			result = result * c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
-
-		# Combine shifted filter responses
-		# curResult = self.weightedGeometricMean(curResponses)
-		result = result**(1/len(curTuples))
-
-		# Store timing
-		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
-
+		#Combine to result
+		result = np.multiply.reduce(curResponses)
+		result = result**(1/len(curResponses))
 		return result
+
+	def shiftResponse(self, tupl):
+
+		rho = tupl[0]
+		phi = tupl[1]
+		args = tuple(tupl[2:])
+		dx = int(round(rho*np.cos(phi)))
+		dy = int(round(-rho*np.sin(phi)))
+
+		# Apply shift
+		return (tupl,c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0))
 
 	def findTuples(self):
 		# Init some variables
@@ -161,24 +185,24 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 		t0 = time.time()                                 # Time point
 
-		uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
+		#uniqueArgs = c.unique([ tuple(args) for (rho,phi,*args) in self.tuples])
 		filteredResponses = {}
-		for args in uniqueArgs:
+		for args in c.unique([ tuple(args) for (rho,*args) in self.uniqueArgs]):
 			# First apply the chosen filter
 			filteredResponse = self.filt(*args).transform(subject)
 			# ReLU
 			filteredResponse = np.where(filteredResponse < self.T1, 0, filteredResponse)
 			# Save response
-			filteredResponses[args] = filteredResponse
+			filteredResponses[tuple(args)] = filteredResponse
 
 		# Store timing
 		self.timings.append( ("\tApplying {} filter(s)".format(len(filteredResponses)), time.time()-t0) )
 		t1 = time.time()                                 # Time point
 
 		responses = {}
-		for tupl in self.tuples:
+		for tupl in self.uniqueArgs:
 			rho = tupl[0]
-			args = tupl[2:]
+			args = tupl[1:]
 
 			if self.alpha != 0:
 				for upsilon in self.scaleInvariance:

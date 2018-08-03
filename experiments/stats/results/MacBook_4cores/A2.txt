@@ -1,0 +1,40 @@
+
+ --- TIME MEASUREMENTS: Symmetric Filter, 4 thread(s) --- 
+   0.02ms		Finding tuples for rho=0
+   6.35ms		Finding tuples for rho=2
+   6.05ms		Finding tuples for rho=4
+   5.96ms		Finding tuples for rho=6
+   5.96ms		Finding tuples for rho=8
+  24.33ms	Finding all 9 tuples for 5 different values of rho
+  62.20ms		Applying 1 filter(s)
+  14.81ms		Computing 5 blurred filter response(s)
+  77.24ms	Precomputing 5 filtered+blurred responses
+1084.69ms	Shifting and combining all responses
+
+ --- TIME MEASUREMENTS: Asymmetric Filter, 4 thread(s) --- 
+   0.02ms		Finding tuples for rho=0
+   5.33ms		Finding tuples for rho=2
+   5.41ms		Finding tuples for rho=4
+   5.62ms		Finding tuples for rho=6
+   7.74ms		Finding tuples for rho=8
+   6.66ms		Finding tuples for rho=10
+   6.98ms		Finding tuples for rho=12
+   8.18ms		Finding tuples for rho=14
+   8.53ms		Finding tuples for rho=16
+  10.01ms		Finding tuples for rho=18
+  10.05ms		Finding tuples for rho=20
+  11.00ms		Finding tuples for rho=22
+  85.55ms	Finding all 23 tuples for 12 different values of rho
+  48.86ms		Applying 1 filter(s)
+  16.24ms		Computing 12 blurred filter response(s)
+  65.34ms	Precomputing 12 filtered+blurred responses
+5274.11ms	Shifting and combining all responses
+
+ --- TIME MEASUREMENTS: Global, 4 thread(s) --- 
+  49.21ms	Loading in the prototype(.png), mask(.png) and input(.csv)
+  32.15ms	Creating the symmetrical filter, fitting it with the prototype
+1165.65ms	Transforming the subject with the symmetrical filter
+  95.57ms	Creating the asymmetrical filter, fitting it with the prototype
+5351.95ms	Transforming the subject with the asymmetrical filter
+  11.34ms	Combining results, stretching them, masking them, binarization
+ 241.89ms	Storing results to file

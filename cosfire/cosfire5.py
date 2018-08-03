@@ -3,28 +3,23 @@ import cosfire as c
 import math as m
 import numpy as np
 import time
-from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing.dummy import Pool
 import multiprocessing as mp
 
-print("PARALLEL A")
+print("PARALLEL 5")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
-	def __init__(self, strategy):
-		self.strategy = strategy
+	def __init__(self, strategy, *pargs, **kwargs):
+		self.strategy = strategy(*pargs, **kwargs)
 
 	def fit(self, *pargs, **kwargs):
 		self.strategy.fit(*pargs, **kwargs)
 		return self;
 
-	def transform(self, subject):
-		return self.strategy.transform(subject)
+	def transform(self, prototype, *pargs, **kwargs):
+		return self.strategy.transform(prototype, *pargs, **kwargs)
 
-	def get_params(self, deep=True):
-		return self.strategy.get_params(deep)
-
-	def set_params(self, **params):
-		return self.strategy.set_params(**params)
 
 
 class CircleStrategy(BaseEstimator, TransformerMixin):
@@ -45,6 +40,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		self.numthreads = numthreads
 		if numthreads > 1:
 			self.pool = Pool(numthreads)
+			self.pool2 = Pool(mp.cpu_count())
 
 	def fit(self):
 		self.protoStack = c.ImageStack().push(self.prototype).applyFilter(self.filt, self.filterArgs)
@@ -55,7 +51,6 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		t0 = time.time()                                         # Time point
 
 		# Precompute all blurred filter responses
-		self.subject = subject
 		self.responses = self.computeResponses(subject)
 
 		# Store timing
@@ -68,14 +63,11 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 			for upsilon in self.scaleInvariance:
 				variations.append( (psi, upsilon) )
 
-
-
 		# Store the maximum of all the orientations
 		if self.numthreads > 1:
-			shift = [chunk for chunk in self.pool.imap_unordered(self.shiftCombine, variations)]
+			result = np.amax(self.pool.map(self.shiftCombine, variations), axis=0)
 		else:
-			shift = [self.shiftCombine(tupl) for tupl in variations]
-		result = np.amax(shift, axis=0)
+			result = np.amax([self.shiftCombine(tupl) for tupl in variations], axis=0)
 
 		# Store timing
 		self.timings.append( ("Shifting and combining all responses", time.time()-t1) )
@@ -91,25 +83,29 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		curTuples = [(rho*upsilon, phi+psi, *params) for (rho, phi, *params) in self.tuples]
 
 		# Collect shifted filter responses
-		result = np.ones(self.subject.shape)
-		for tupl in curTuples:
-			rho = tupl[0]
-			phi = tupl[1]
-			args = tupl[2:]
-			dx = int(round(rho*np.cos(phi)))
-			dy = int(round(-rho*np.sin(phi)))
-
-			# Apply shift
-			result = result * c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
+		if self.numthreads > 1:
+			curResponses = self.pool2.map(self.shiftResponse, curTuples)
+		else:
+			curResponses = [self.shiftResponse(tupl) for tupl in curTuples]
 
 		# Combine shifted filter responses
-		# curResult = self.weightedGeometricMean(curResponses)
-		result = result**(1/len(curTuples))
+		result = np.multiply.reduce(curResponses)
+		result = result**(1/len(curResponses))
 
 		# Store timing
 		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
 
 		return result
+
+	def shiftResponse(self, tupl):
+		rho = tupl[0]
+		phi = tupl[1]
+		args = tupl[2:]
+		dx = int(round(rho*np.cos(phi)))
+		dy = int(round(-rho*np.sin(phi)))
+
+		# Apply shift
+		return c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
 
 	def findTuples(self):
 		# Init some variables

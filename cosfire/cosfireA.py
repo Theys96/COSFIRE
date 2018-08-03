@@ -93,6 +93,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		# Collect shifted filter responses
 		result = np.ones(self.subject.shape)
 		for tupl in curTuples:
+			t1 = time.time()                                 # Time point
 			rho = tupl[0]
 			phi = tupl[1]
 			args = tupl[2:]
@@ -101,12 +102,16 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 
 			# Apply shift
 			result = result * c.shiftImage(self.responses[(rho,)+args], -dx, -dy).clip(min=0)
+			self.timings.append( ("\t\tShift".format(psi, upsilon), time.time()-t1) )
+
+		t2 = time.time()                                 # Time point
 
 		# Combine shifted filter responses
 		# curResult = self.weightedGeometricMean(curResponses)
 		result = result**(1/len(curTuples))
 
 		# Store timing
+		self.timings.append( ("\t\tDoing the square for geometric mean".format(psi, upsilon), time.time()-t2) )
 		self.timings.append( ("\tShifting and combining the responses for psi={:4.2f} and upsilon={}".format(psi, upsilon), time.time()-t0) )
 
 		return result
