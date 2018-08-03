@@ -1,6 +1,6 @@
 import variationUtil
 
-'''  --- Variation 5 --- '''
+'''  --- Strategy B --- '''
 variationUtil.setVariation('B')
 import cosfire as c
 import numpy as np

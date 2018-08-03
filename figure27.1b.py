@@ -1,6 +1,6 @@
 import variationUtil
 
-'''  --- Variation 5 --- '''
+'''  --- Variation 6 --- '''
 variationUtil.setVariation('6')
 import cosfire as c
 import numpy as np
