@@ -8,6 +8,8 @@ import os
 from multiprocessing.pool import ThreadPool as Pool
 #import multiprocessing as mp
 
+print("PARALLEL B")
+
 class COSFIRE(BaseEstimator, TransformerMixin):
 
 	def __init__(self, strategy):
@@ -121,7 +123,7 @@ class CircleStrategy(BaseEstimator, TransformerMixin):
 		result = np.multiply.reduce(curResponses)
 		result = result**(1/len(curResponses))
 		return result
-	
+
 	def shiftResponse(self, tupl):
 
 		rho = tupl[0]
