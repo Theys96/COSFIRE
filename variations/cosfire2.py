@@ -10,15 +10,21 @@ print("COSFIRE variation 2")
 
 class COSFIRE(BaseEstimator, TransformerMixin):
 
-	def __init__(self, strategy, *pargs, **kwargs):
-		self.strategy = strategy(*pargs, **kwargs)
+	def __init__(self, strategy):
+		self.strategy = strategy
 
 	def fit(self, *pargs, **kwargs):
 		self.strategy.fit(*pargs, **kwargs)
 		return self;
 
-	def transform(self, prototype, *pargs, **kwargs):
-		return self.strategy.transform(prototype, *pargs, **kwargs)
+	def transform(self, subject):
+		return self.strategy.transform(subject)
+
+	def get_params(self, deep=True):
+		return self.strategy.get_params(deep)
+
+	def set_params(self, **params):
+		return self.strategy.set_params(**params)
 
 
 
