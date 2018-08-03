@@ -73,3 +73,6 @@ target/
 experiments/update
 experiments/responses
 experiments/comparison_matlab/responses
+
+# For the graphs
+*.csv
